@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Animation/Defs.h"
+#include "Defs.h"
 
 namespace Animation
 {

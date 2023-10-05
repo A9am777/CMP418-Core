@@ -1,4 +1,4 @@
-#include "Animation/Structs.h"
+#include "Animation/Data/Structs.h"
 
 namespace Animation
 {

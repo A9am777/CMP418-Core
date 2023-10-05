@@ -13,10 +13,10 @@ namespace Animation
 	class SimpleSpriteStack
 	{
 		public:
-			SimpleSpriteStack(Animation::Label name);
+			SimpleSpriteStack(Label name);
 			~SimpleSpriteStack();
 
-			void load(Animation::Label path, gef::Platform& platform, Animation::Label ext = ".png");
+			void load(Label path, gef::Platform& platform, Label ext = ".png");
 			
 			gef::Texture* getDisplay(Float elapsed);
 
@@ -42,7 +42,7 @@ namespace Animation
 		SimpleSpriteAnimator();
 
 		UInt registerAnimation(Label name, Float fps);
-		void loadAll(Animation::Label path, gef::Platform& platform, Animation::Label ext = ".png");
+		void loadAll(Label path, gef::Platform& platform, Label ext = ".png");
 		void update(Float dt);
 		
 		void play(UInt animID);

@@ -1,6 +1,6 @@
 #include "Animation/SimpleSpriteStack.h"
-#include "Animation/Defs.h"
-#include "Animation/Structs.h"
+#include "Defs.h"
+#include "Data/Structs.h"
 
 namespace Animation
 {
@@ -12,7 +12,7 @@ namespace Animation
 	{
 		wipe();
 	}
-	void SimpleSpriteStack::load(Label path, gef::Platform& platform, Animation::Label ext)
+	void SimpleSpriteStack::load(Label path, gef::Platform& platform, Label ext)
 	{
 		// Pull all file textures whilst good
 		do
@@ -42,7 +42,7 @@ namespace Animation
 	{
 
 	}
-	UInt SimpleSpriteAnimator::registerAnimation(Animation::Label name, Float fps)
+	UInt SimpleSpriteAnimator::registerAnimation(Label name, Float fps)
 	{
 		animations.push_back(SimpleSpriteStack(name));
 
@@ -53,7 +53,7 @@ namespace Animation
 
 		return UInt(animations.size() - 1);
 	}
-	void SimpleSpriteAnimator::loadAll(Animation::Label path, gef::Platform& platform, Animation::Label ext)
+	void SimpleSpriteAnimator::loadAll(Label path, gef::Platform& platform, Label ext)
 	{
 		for (auto& stack : animations)
 		{
