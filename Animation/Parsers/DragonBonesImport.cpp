@@ -76,6 +76,8 @@ namespace IO
       }
     }
 
+    out.bake();
+    out.forwardKinematics();
     return out.bake();
   }
   bool DragonBonesImporter::parseAnimationAtlas(Textures::TextureAtlas& out, const rapidjson::Document& json)

@@ -1,9 +1,10 @@
 #pragma once
 #include "../Defs.h"
-#include "maths/matrix33.h"
+#include <maths/matrix44.h>
 #include <vector>
 #include <map>
 #include <list>
+#include <maths/vector2.h>
 
 namespace Animation
 {
@@ -39,6 +40,8 @@ namespace Animation
 
     inline bool isBaked() const { return !boneHeap.empty(); }
 
+    void forwardKinematics();
+
     private:
     void linkDescriptor(); // Propagate skeletal structure
 
@@ -57,8 +60,8 @@ namespace Animation
     struct HeapedBone
     {
       UInt parent;
-      gef::Matrix33 localTransform;
-      gef::Matrix33 globalTransform;
+      gef::Matrix44 localTransform;
+      gef::Matrix44 globalTransform;
     };
     std::vector<HeapedBone> boneHeap;
     //

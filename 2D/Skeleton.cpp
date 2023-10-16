@@ -1,6 +1,7 @@
 #include "Skeleton.h"
 
 #include "maths/math_utils.h"
+#include <functional>
 
 namespace Animation
 {
@@ -36,36 +37,52 @@ namespace Animation
     linkDescriptor();
 
     auto& desc = *detailedDescriptor;
-    // Traverse tree by depth, ensuring children are packed sequentially
+    // Traverse tree by depth, ensuring bones are packed sequentially
     {
       boneHeap.resize(desc.boneCollection.size()); // May overallocate where bone data is bad, this is not an issue
       // The recursive step
-      auto nodeTraversal = [&](DetailedBone& parent, UInt& allocProgress)
+      std::function<void(DetailedBone&, UInt&)> nodeTraversal = [&](DetailedBone& parent, UInt& allocProgress)
       {
         // First, build self at the designated location
         {
           auto& heapParent = boneHeap[allocProgress];
           heapParent.localTransform.SetIdentity();
-          heapParent.localTransform.Rotate(gef::DegToRad(parent.restPose.skew.x));
-          heapParent.localTransform.SetTranslation(parent.restPose.translation);
+          heapParent.localTransform.RotationZ(gef::DegToRad(parent.restPose.skew.x));
+          heapParent.localTransform.SetTranslation(gef::Vector4(parent.restPose.translation.x, parent.restPose.translation.y, .0f));
         }
 
         // Now explore children
         for(auto& childID : parent.children)
         {
           auto& childBone = desc.boneCollection[childID];
-          childBone.heapID = allocProgress;
-          //childBone.
+          childBone.heapID = ++allocProgress;
 
           auto& heapBone = boneHeap[allocProgress];
-          heapBone.parent = ++allocProgress;
-          
+          heapBone.parent = parent.heapID;
+
+          nodeTraversal(childBone, allocProgress);
         }
 
       };
+
+      // Start from the root and build the flattened skeletal structure
+      auto& rootBone = desc.boneCollection[desc.root];
+      rootBone.heapID = 0;
+      UInt progress = 0;
+      nodeTraversal(rootBone, progress);
     }
 
     return isBaked();
+  }
+
+  void Skeleton2D::forwardKinematics()
+  {
+    // Start after the root and traverse the tree linearly
+    for (size_t i = 1; i < boneHeap.size(); ++i)
+    {
+      auto& thisBone = boneHeap[i];
+      thisBone.globalTransform = boneHeap[thisBone.parent].globalTransform * thisBone.localTransform;
+    }
   }
 
   void Skeleton2D::linkDescriptor()
