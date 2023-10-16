@@ -12,6 +12,6 @@ namespace IO
   {
     public:
     static bool parseSkeleton(Animation::Skeleton2D& out, const rapidjson::Document& json);
-    static bool parseAnimationAtlas(Textures::TextureAtlas<Animation::Float>& out, const rapidjson::Document& json);
+    static bool parseAnimationAtlas(Textures::TextureAtlas& out, const rapidjson::Document& json);
   };
 }

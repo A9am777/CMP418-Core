@@ -7,7 +7,7 @@ namespace Animation
 	struct FrameSignature
 	{
 		UInt major; // The frame ID itself
-		Float minor; // The exact moment within the frame
-		FrameSignature(Float time, Float frametime); // Breakdown
+		float minor; // The exact moment within the frame
+		FrameSignature(float time, float frametime); // Breakdown
 	};
 }

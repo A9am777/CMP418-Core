@@ -21,14 +21,13 @@ namespace Textures
   };
 
   // Describes how a texture is subdivided into smaller textures
-  template<typename T> class TextureAtlas
+  class TextureAtlas
   {
     public:
-    using Number = T;
     struct RegionPack
     {
-      Maths::Region2D<Number> uv;
-      Maths::Vector2D<Number> origin;
+      Maths::Region2D uv;
+      Maths::Vector2D origin;
     };
 
     TextureAtlas();
@@ -49,5 +48,3 @@ namespace Textures
   };
 
 }
-
-#include "TextureWorksImpl.h"

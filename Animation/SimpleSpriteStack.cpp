@@ -22,7 +22,7 @@ namespace Animation
 		} while (frames.back());
 		frames.pop_back(); // Remove the invalid 'flag' texture
 	}
-	gef::Texture* SimpleSpriteStack::getDisplay(Float elapsed)
+	gef::Texture* SimpleSpriteStack::getDisplay(float elapsed)
 	{
 		FrameSignature sig(elapsed, frametime);
 		return getCount() ? frames[sig.major % getCount()] : nullptr; // Return frame if it exists
@@ -42,7 +42,7 @@ namespace Animation
 	{
 
 	}
-	UInt SimpleSpriteAnimator::registerAnimation(Label name, Float fps)
+	UInt SimpleSpriteAnimator::registerAnimation(Label name, float fps)
 	{
 		animations.push_back(SimpleSpriteStack(name));
 
@@ -63,7 +63,7 @@ namespace Animation
 			}
 		}
 	}
-	void SimpleSpriteAnimator::update(Float dt)
+	void SimpleSpriteAnimator::update(float dt)
 	{
 		if (playing)
 		{

@@ -18,11 +18,11 @@ namespace Animation
 
 			void load(Label path, gef::Platform& platform, Label ext = ".png");
 			
-			gef::Texture* getDisplay(Float elapsed);
+			gef::Texture* getDisplay(float elapsed);
 
-			inline void setRate(Float fps) { frametime = 1 / fps; }
-			inline Float getFrameTime() const { return frametime; }
-			inline Float getDuration() const { return frametime * Float(getCount()); }
+			inline void setRate(float fps) { frametime = 1 / fps; }
+			inline float getFrameTime() const { return frametime; }
+			inline float getDuration() const { return frametime * float(getCount()); }
 			inline size_t getCount() const { return frames.size(); }
 		protected:
 			inline std::string getSuffix(UInt num) {
@@ -33,7 +33,7 @@ namespace Animation
 		private:
 		std::string stackName;
 		std::vector<gef::Texture*> frames;
-		Float frametime;
+		float frametime;
 	};
 
 	class SimpleSpriteAnimator
@@ -41,9 +41,9 @@ namespace Animation
 		public:
 		SimpleSpriteAnimator();
 
-		UInt registerAnimation(Label name, Float fps);
+		UInt registerAnimation(Label name, float fps);
 		void loadAll(Label path, gef::Platform& platform, Label ext = ".png");
-		void update(Float dt);
+		void update(float dt);
 		
 		void play(UInt animID);
 		void setTexture(gef::Sprite& sprite);
@@ -54,7 +54,7 @@ namespace Animation
 		std::vector<SimpleSpriteStack> animations;
 		bool playing;
 		SimpleSpriteStack* currentAnim;
-		Float epoch; // The constant denoting current timeline (for precision)
-		Float elapsedTime;
+		float epoch; // The constant denoting current timeline (for precision)
+		float elapsedTime;
 	};
 }

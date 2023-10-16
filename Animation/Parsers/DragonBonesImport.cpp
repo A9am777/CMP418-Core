@@ -45,10 +45,9 @@ namespace IO
     if (!node.HasMember("transform")) { return false; }
     auto boneTransformNode = node["transform"].GetObject();
     getValue(boneTransformNode, "x", out.translation.x);
-    out.translation.x = boneTransformNode.HasMember("x") ? boneTransformNode["x"].GetFloat() : .0f;
-    out.translation.y = boneTransformNode.HasMember("y") ? boneTransformNode["y"].GetFloat() : .0f;
-    out.skew.x = boneTransformNode.HasMember("skX") ? boneTransformNode["skX"].GetFloat() : .0f;
-    out.skew.y = boneTransformNode.HasMember("skY") ? boneTransformNode["skY"].GetFloat() : .0f;
+    getValue(boneTransformNode, "y", out.translation.y);
+    getValue(boneTransformNode, "skX", out.skew.x);
+    getValue(boneTransformNode, "skY", out.skew.y);
 
     return true;
   }
@@ -70,8 +69,8 @@ namespace IO
         if (!boneNode.HasMember("name")) { continue; }
         auto& boneInfo = out.addBone(boneNode["name"].GetString());
 
-        boneInfo.parentName = boneNode.HasMember("parent") ? boneNode["parent"].GetString() : "";
-        boneInfo.length = boneNode.HasMember("length") ? boneNode["length"].GetUint() : 0;
+        getValue(boneNode, "parent", boneInfo.parentName, "");
+        getValue(boneNode, "length", boneInfo.length);
 
         parseBoneTransform(boneInfo.restPose, boneNode);
       }
@@ -79,32 +78,30 @@ namespace IO
 
     return out.bake();
   }
-  bool DragonBonesImporter::parseAnimationAtlas(Textures::TextureAtlas<Animation::Float>& out, const rapidjson::Document& json)
+  bool DragonBonesImporter::parseAnimationAtlas(Textures::TextureAtlas& out, const rapidjson::Document& json)
   {
     using namespace Textures;
 
     TextureDesc desc;
     {
-      desc.width = json["width"].GetUint();
-      desc.height = json["height"].GetUint();
+      getValue(json, "width", desc.width);
+      getValue(json, "height", desc.height);
       out.init(desc);
     }
 
     // Fetch all subtextures
+    if(json.HasMember("SubTexture"))
     {
-      auto subArray = json["SubTexture"].GetArray();
-      for (auto& sub : subArray)
+      auto subArrayNode = json["SubTexture"].GetArray();
+      for (auto& subNode : subArrayNode)
       {
         SubTextureDesc desc;
-        desc.x = sub["x"].GetUint();
-        desc.y = sub["y"].GetUint();
-        desc.width = sub["width"].GetUint();
-        desc.height = sub["height"].GetUint();
-        desc.offsetX = sub["frameX"].GetInt();
-        desc.offsetY = sub["frameY"].GetInt();
-        desc.offsetX = sub["frameX"].GetInt();
-        desc.offsetY = sub["frameY"].GetInt();
-
+        getValue(subNode, "x", desc.x);
+        getValue(subNode, "y", desc.y);
+        getValue(subNode, "width", desc.width);
+        getValue(subNode, "height", desc.height);
+        getValue(subNode, "frameX", desc.offsetX);
+        getValue(subNode, "frameY", desc.offsetY);
         out.addDivision(desc);
       }
     }

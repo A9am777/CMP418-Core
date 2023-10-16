@@ -2,13 +2,9 @@
 
 namespace Animation
 {
-	FrameSignature::FrameSignature(Float time, Float frametime)
+	FrameSignature::FrameSignature(float time, float frametime)
 	{
-		#ifdef Animation_DoublePrecision
-		minor = fmod(time, frametime);
-		#else
 		minor = fmodf(time, frametime);
-		#endif
 		major = UInt(time / frametime);
 	}
 }

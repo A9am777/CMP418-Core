@@ -2,13 +2,13 @@
 
 namespace Maths
 {
-	template<typename T> struct Region2D
+	struct Region2D
 	{
-		T right, bottom, left, top;
+		float right, bottom, left, top;
 	};
 
-	template<typename T> struct Vector2D
+	struct Vector2D
 	{
-		T x, y;
+		float x, y;
 	};
 }

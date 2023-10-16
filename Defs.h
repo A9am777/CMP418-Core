@@ -14,13 +14,3 @@ typedef int Int;
 typedef unsigned int UInt;
 
 static constexpr Literal fsp = "/"; // Path seperator
-
-namespace Animation
-{
-	// Control precision
-	#ifdef Animation_DoublePrecision
-	typedef double Float;
-	#else
-	typedef float Float;
-	#endif
-}
