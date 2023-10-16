@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include "maths/matrix44.h"
 
 #include "Defs.h"
 #include "Maths.h"
@@ -17,7 +18,8 @@ namespace Textures
   {
     UInt x, y;
     UInt width, height;
-    Int offsetX, offsetY;
+    Int displayX, displayY;
+    Int displayWidth, displayHeight;
   };
 
   // Describes how a texture is subdivided into smaller textures
@@ -27,7 +29,7 @@ namespace Textures
     struct RegionPack
     {
       Maths::Region2D uv;
-      Maths::Vector2D origin;
+      gef::Matrix44 transform;
     };
 
     TextureAtlas();

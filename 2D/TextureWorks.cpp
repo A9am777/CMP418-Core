@@ -38,11 +38,13 @@ namespace Textures
       for (size_t i = 0; i < subDivisions.size(); ++i)
       {
         auto& div = subDivisions[i];
+
         progress->uv.left = float(div.x) * xNorm;
         progress->uv.bottom = float(div.y) * yNorm;
         progress->uv.right = progress->uv.left + float(div.width) * xNorm;
         progress->uv.top = progress->uv.bottom + float(div.height) * yNorm;
-        progress->origin = { float(div.offsetX) * xNorm, float(div.offsetY) * yNorm };
+        progress->transform.SetIdentity();
+        progress->transform.SetTranslation(gef::Vector4(float(div.width) * 0.5f - float(div.displayWidth) * 0.5f - float(div.displayX), float(div.height) * 0.5f - float(div.displayHeight) * 0.5f - float(div.displayY), 0));
         ++progress;
       }
     }

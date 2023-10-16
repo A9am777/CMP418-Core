@@ -96,12 +96,14 @@ namespace IO
       for (auto& subNode : subArrayNode)
       {
         SubTextureDesc desc;
+        getValue(subNode, "frameX", desc.displayX);
+        getValue(subNode, "frameY", desc.displayY);
+        getValue(subNode, "frameWidth", desc.displayWidth);
+        getValue(subNode, "frameHeight", desc.displayHeight);
         getValue(subNode, "x", desc.x);
         getValue(subNode, "y", desc.y);
-        getValue(subNode, "width", desc.width);
-        getValue(subNode, "height", desc.height);
-        getValue(subNode, "frameX", desc.offsetX);
-        getValue(subNode, "frameY", desc.offsetY);
+        getValue(subNode, "width", desc.width, desc.displayWidth);
+        getValue(subNode, "height", desc.height, desc.displayHeight);
         out.addDivision(desc);
       }
     }
