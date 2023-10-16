@@ -39,7 +39,7 @@ namespace Textures
     UInt addDivision(const SubTextureDesc& division);
     
     inline bool isBaked() const { return regions != nullptr; }
-    inline UInt getCount() const { return UInt(subDivisions.size()); }
+    inline UInt getCount() const { return static_cast<UInt>(subDivisions.size()); }
     inline const TextureDesc* getDescriptor() const { return &desc; }
     inline const RegionPack* getData(UInt id) const { return regions + id; }
     private:
