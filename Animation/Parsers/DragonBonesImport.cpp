@@ -80,15 +80,19 @@ namespace IO
     out.forwardKinematics();
     return out.bake();
   }
-  bool DragonBonesImporter::parseAnimationAtlas(Textures::TextureAtlas& out, const rapidjson::Document& json)
+  bool DragonBonesImporter::parseAnimationAtlas(Textures::TextureCollection& collection, Textures::TextureAtlas& out, const rapidjson::Document& json)
   {
     using namespace Textures;
 
     TextureDesc desc;
+    UInt textureID = SNULL;
     {
+      std::string imagePath;
+      getValue(json, "imagePath", imagePath);
       getValue(json, "width", desc.width);
       getValue(json, "height", desc.height);
-      out.init(desc);
+
+      textureID = collection.add(imagePath, desc);
     }
 
     // Fetch all subtextures
@@ -97,19 +101,21 @@ namespace IO
       auto subArrayNode = json["SubTexture"].GetArray();
       for (auto& subNode : subArrayNode)
       {
-        SubTextureDesc desc;
-        getValue(subNode, "frameX", desc.displayX);
-        getValue(subNode, "frameY", desc.displayY);
-        getValue(subNode, "frameWidth", desc.displayWidth);
-        getValue(subNode, "frameHeight", desc.displayHeight);
-        getValue(subNode, "x", desc.x);
-        getValue(subNode, "y", desc.y);
-        getValue(subNode, "width", desc.width, desc.displayWidth);
-        getValue(subNode, "height", desc.height, desc.displayHeight);
-        out.addDivision(desc);
+        SubTextureDesc subDesc;
+        std::string name;
+        getValue(subNode, "name", name, "undefined");
+        getValue(subNode, "frameX", subDesc.displayX);
+        getValue(subNode, "frameY", subDesc.displayY);
+        getValue(subNode, "frameWidth", subDesc.displayWidth, desc.width);
+        getValue(subNode, "frameHeight", subDesc.displayHeight, desc.height);
+        getValue(subNode, "x", subDesc.x);
+        getValue(subNode, "y", subDesc.y);
+        getValue(subNode, "width", subDesc.width, subDesc.displayWidth);
+        getValue(subNode, "height", subDesc.height, subDesc.displayHeight);
+        out.addDivision(name, subDesc);
       }
     }
 
-    return out.bake();
+    return out.bake(textureID, desc);
   }
 }
