@@ -60,12 +60,12 @@ namespace Textures
         // Real offset
         progress->transform.SetIdentity();
         progress->transform.SetTranslation(gef::Vector4(float(div.width) * 0.5f - float(div.displayWidth) * 0.5f - float(div.displayX), float(div.height) * 0.5f - float(div.displayHeight) * 0.5f - float(div.displayY), 0));
+        //progress->transform.Scale();
         // Real size
         progress->size = gef::Vector2(float(div.width), float(div.height));
         ++progress;
       }
     }
-
     return isBaked();
   }
 

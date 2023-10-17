@@ -37,6 +37,7 @@ namespace Textures
     UInt getTextureDesc(Path path, TextureDesc& out);
 
     inline const gef::Texture* getTextureData(UInt id) const { return id < textures.size() ? textures[id] : nullptr; }
+    inline bool isBaked() const { return !textures.empty(); }
 
     private:
     struct DetailedTexture

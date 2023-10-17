@@ -70,6 +70,9 @@ namespace Animation
       rootBone.heapID = 0;
       UInt progress = 0;
       nodeTraversal(rootBone, progress);
+
+      // Set the global transform to identity
+      boneHeap[0].globalTransform.SetIdentity();
     }
 
     return isBaked();
@@ -92,7 +95,7 @@ namespace Animation
     for (size_t i = 1; i < boneHeap.size(); ++i)
     {
       auto& thisBone = boneHeap[i];
-      thisBone.globalTransform = boneHeap[thisBone.parent].globalTransform * thisBone.localTransform;
+      thisBone.globalTransform = thisBone.localTransform * boneHeap[thisBone.parent].globalTransform;
     }
   }
 
@@ -161,14 +164,16 @@ namespace Animation
   SkinnedSkeleton2D::SkinnedSkeleton2D()
   {
     currentSkin = 0;
+    atlas = nullptr;
     baked = false;
   }
 
-  bool SkinnedSkeleton2D::bake(Textures::TextureAtlas* atlas)
+  bool SkinnedSkeleton2D::bake(Textures::TextureAtlas* atlasTextures)
   {
     baked = true;
     baked = baked && skeleton.bake();
-    baked = baked && atlas->isBaked();
+    baked = baked && atlasTextures->isBaked();
+    atlas = atlasTextures;
 
     slots.bake(skeleton);
     for (auto& skin : skins)
@@ -190,13 +195,15 @@ namespace Animation
 
     // Hold a sprite with the texture atlas
     gef::Sprite sprite;
-    sprite.set_texture(textures.getTextureData(atlas->getTextureID()));
+    if (textures.isBaked())
+    {
+      sprite.set_texture(textures.getTextureData(atlas->getTextureID()));
+    }
 
     auto& skin = skins[currentSkin];
 
     // Traverse the linear bone list
-    renderer->Begin();
-    for (UInt boneID = 0; boneID < skeleton.getBoneCount(); ++boneID)
+    for (UInt boneID = 1; boneID < skeleton.getBoneCount(); ++boneID)
     {
       auto divData = atlas->getData(skin.getSubtextureID(boneID));
 
@@ -206,19 +213,29 @@ namespace Animation
       sprite.set_uv_position({ divData->uv.left, divData->uv.bottom });
       
       // Resize
-      sprite.set_width(divData->size.x);
-      sprite.set_height(divData->size.y);
+      sprite.set_width(divData->size.x * 100);
+      sprite.set_height(divData->size.y * 100);
+
+      // Set draw order
+      sprite.set_position(480, 480, slots.getOrder(boneID));
       
       // Compute the subtexture transform
       gef::Matrix44 transform = skeleton.getBoneTransform(boneID); // World
-      transform = divData->transform * transform; // Subtexture offset transform
+      
+      const float testScalar = 1.f;
+      gef::Matrix44 spriteTransform;
+      spriteTransform.SetIdentity();
+      spriteTransform.Scale(gef::Vector4(divData->size.x * testScalar, divData->size.y * testScalar, 0, 0));
 
+      transform = spriteTransform * divData->transform;
+      //transform = spriteTransform * divData->transform * skin.getTransform(boneID) * transform;
+      //transform = divData->transform * transform;
       {
-        gef::Matrix33 worldTransform = Maths::maskMat44(transform);
-        renderer->DrawSprite(sprite, worldTransform);
+        //gef::Matrix33 worldTransform = Maths::maskMat44(transform);
+        //renderer->DrawSprite(sprite, worldTransform);
+        //renderer->DrawSprite(sprite);
       }
     }
-    renderer->End();
   }
 
   bool Skeleton2DSkin::bake(const Skeleton2D& skele, const Skeleton2DSlots& slotMap, const Textures::TextureAtlas& atlas)
@@ -242,6 +259,7 @@ namespace Animation
       bakedLink.subtextureID = atlasDivisionID == SNULL ? 0 : atlasDivisionID;
     }
 
+    return isBaked();
   }
 
   void Skeleton2DSkin::addLink(Label slotName, Label subTextureName, const Skeleton2D::BonePoseOffset& offset)

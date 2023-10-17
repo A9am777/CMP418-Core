@@ -84,6 +84,7 @@ namespace Animation
     std::string getSlotBone(Label slotName) const;
 
     inline bool isBaked() const { return !bakedDrawOrder.empty(); }
+    inline UInt getOrder(UInt boneHeapID) const { return bakedDrawOrder[boneHeapID]; }
 
     private:
     struct DetailedSlotInfo
