@@ -74,8 +74,6 @@ namespace IO
       }
     }
 
-    out.bake();
-    out.forwardKinematics();
     return out.bake();
   }
 
@@ -178,14 +176,15 @@ namespace IO
         SubTextureDesc subDesc;
         std::string name;
         getValue(subNode, "name", name, "undefined");
-        getValue(subNode, "frameX", subDesc.displayX);
-        getValue(subNode, "frameY", subDesc.displayY);
-        getValue(subNode, "frameWidth", subDesc.displayWidth, desc.width);
-        getValue(subNode, "frameHeight", subDesc.displayHeight, desc.height);
+        getValue(subNode, "width", subDesc.width, desc.width);
+        getValue(subNode, "height", subDesc.height, desc.height);
         getValue(subNode, "x", subDesc.x);
         getValue(subNode, "y", subDesc.y);
-        getValue(subNode, "width", subDesc.width, subDesc.displayWidth);
-        getValue(subNode, "height", subDesc.height, subDesc.displayHeight);
+        getValue(subNode, "frameX", subDesc.displayX);
+        getValue(subNode, "frameY", subDesc.displayY);
+        getValue(subNode, "frameWidth", subDesc.displayWidth, subDesc.width);
+        getValue(subNode, "frameHeight", subDesc.displayHeight, subDesc.height);
+        
         out.addDivision(name, subDesc);
       }
     }

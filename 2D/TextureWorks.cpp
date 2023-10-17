@@ -57,12 +57,17 @@ namespace Textures
         progress->uv.bottom = float(div.y) * yNorm;
         progress->uv.right = progress->uv.left + float(div.width) * xNorm;
         progress->uv.top = progress->uv.bottom + float(div.height) * yNorm;
-        // Real offset
-        progress->transform.SetIdentity();
-        progress->transform.SetTranslation(gef::Vector4(float(div.width) * 0.5f - float(div.displayWidth) * 0.5f - float(div.displayX), float(div.height) * 0.5f - float(div.displayHeight) * 0.5f - float(div.displayY), 0));
-        //progress->transform.Scale();
-        // Real size
-        progress->size = gef::Vector2(float(div.width), float(div.height));
+        
+        // Sub sprite transform
+        {
+          gef::Matrix33 scaleMat = gef::Matrix33::kIdentity;
+          scaleMat.Scale(gef::Vector2(float(div.width), float(div.height)));
+
+          gef::Matrix33 translationMat = gef::Matrix33::kIdentity;
+          translationMat.SetTranslation(gef::Vector2(float(div.width) * 0.5f - float(div.displayWidth) * 0.5f - float(div.displayX), float(div.height) * 0.5f - float(div.displayHeight) * 0.5f - float(div.displayY)));
+
+          progress->transform = scaleMat * translationMat;
+        }
         ++progress;
       }
     }

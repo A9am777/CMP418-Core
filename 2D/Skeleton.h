@@ -18,7 +18,7 @@ namespace Animation
       gef::Vector2 translation;
       gef::Vector2 skew;
 
-      void assignTo(gef::Matrix44& transform) const;
+      void assignTo(gef::Matrix33& transform) const;
     };
 
     // Expensive bone information to offload
@@ -43,10 +43,10 @@ namespace Animation
     UInt getBoneHeapID(Label name) const;
     //
 
-    inline void setLocal(UInt heapID, const gef::Matrix44& localMat) { boneHeap[heapID].localTransform = localMat; }
+    inline void setLocal(UInt heapID, const gef::Matrix33& localMat) { boneHeap[heapID].localTransform = localMat; }
     inline size_t getBoneCount() const { return boneHeap.size(); }
     inline bool isBaked() const { return !boneHeap.empty(); }
-    inline const gef::Matrix44& getBoneTransform(UInt heapID) const { return boneHeap[heapID].globalTransform; }
+    inline const gef::Matrix33& getBoneTransform(UInt heapID) const { return boneHeap[heapID].globalTransform; }
     void forwardKinematics();
 
     private:
@@ -67,8 +67,8 @@ namespace Animation
     struct HeapedBone
     {
       UInt parent;
-      gef::Matrix44 localTransform;
-      gef::Matrix44 globalTransform;
+      gef::Matrix33 localTransform;
+      gef::Matrix33 globalTransform;
     };
     std::vector<HeapedBone> boneHeap;
     //
@@ -107,7 +107,7 @@ namespace Animation
 
     inline bool isBaked() const { return !bakedSubtextureLinks.empty(); }
     inline UInt getSubtextureID(UInt boneHeapID) const { return bakedSubtextureLinks[boneHeapID].subtextureID; }
-    inline const gef::Matrix44& getTransform(UInt boneHeapID) const { return bakedSubtextureLinks[boneHeapID].offsetTransform; }
+    inline const gef::Matrix33& getTransform(UInt boneHeapID) const { return bakedSubtextureLinks[boneHeapID].offsetTransform; }
 
     private:
     struct DetailedSkinPart
@@ -117,7 +117,7 @@ namespace Animation
     };
     struct SkinPart
     {
-      gef::Matrix44 offsetTransform;
+      gef::Matrix33 offsetTransform;
       UInt subtextureID;
     };
 

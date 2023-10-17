@@ -57,8 +57,7 @@ namespace Textures
     struct RegionPack
     {
       Maths::Region2D uv;
-      gef::Vector2 size;
-      gef::Matrix44 transform;
+      gef::Matrix33 transform;
     };
 
     TextureAtlas();

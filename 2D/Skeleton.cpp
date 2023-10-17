@@ -95,7 +95,8 @@ namespace Animation
     for (size_t i = 1; i < boneHeap.size(); ++i)
     {
       auto& thisBone = boneHeap[i];
-      thisBone.globalTransform = thisBone.localTransform * boneHeap[thisBone.parent].globalTransform;
+      auto& thisParent = boneHeap[thisBone.parent];
+      thisBone.globalTransform = thisBone.localTransform * thisParent.globalTransform;
     }
   }
 
@@ -213,27 +214,34 @@ namespace Animation
       sprite.set_uv_position({ divData->uv.left, divData->uv.bottom });
       
       // Resize
-      sprite.set_width(divData->size.x * 100);
-      sprite.set_height(divData->size.y * 100);
+      //sprite.set_width(divData->size.x * 100);
+      //sprite.set_height(divData->size.y * 100);
 
       // Set draw order
       sprite.set_position(480, 480, slots.getOrder(boneID));
       
       // Compute the subtexture transform
-      gef::Matrix44 transform = skeleton.getBoneTransform(boneID); // World
+      gef::Matrix33 transform = skeleton.getBoneTransform(boneID); // World
       
-      const float testScalar = 1.f;
-      gef::Matrix44 spriteTransform;
-      spriteTransform.SetIdentity();
-      spriteTransform.Scale(gef::Vector4(divData->size.x * testScalar, divData->size.y * testScalar, 0, 0));
-
-      transform = spriteTransform * divData->transform;
-      //transform = spriteTransform * divData->transform * skin.getTransform(boneID) * transform;
-      //transform = divData->transform * transform;
+      gef::Matrix33 finalTransform = gef::Matrix33::kIdentity;
+      
       {
-        //gef::Matrix33 worldTransform = Maths::maskMat44(transform);
-        //renderer->DrawSprite(sprite, worldTransform);
-        //renderer->DrawSprite(sprite);
+        gef::Matrix33 interm = gef::Matrix33::kIdentity;
+
+        interm = gef::Matrix33::kIdentity;
+        interm.Scale(gef::Vector2(0.5, 0.5));
+
+        finalTransform = finalTransform * interm;
+
+        interm = gef::Matrix33::kIdentity;
+        interm.SetTranslation(gef::Vector2(250, 250));
+
+        finalTransform = finalTransform * interm;
+      }
+
+      finalTransform = divData->transform * skin.getTransform(boneID) * transform * finalTransform;
+      {
+        renderer->DrawSprite(sprite, finalTransform);
       }
     }
   }
@@ -267,10 +275,14 @@ namespace Animation
     slots.insert({ slotName, {subTextureName, offset} });
   }
 
-  void Skeleton2D::BonePoseOffset::assignTo(gef::Matrix44& transform) const
+  void Skeleton2D::BonePoseOffset::assignTo(gef::Matrix33& transform) const
   {
-    transform.SetIdentity();
-    transform.RotationZ(gef::DegToRad(skew.x));
-    transform.SetTranslation(gef::Vector4(translation.x, translation.y, .0f));
+    gef::Matrix33 rotMat = gef::Matrix33::kIdentity;
+    rotMat.Rotate(gef::DegToRad(skew.x));
+
+    gef::Matrix33 transMat = gef::Matrix33::kIdentity;
+    transMat.SetTranslation(gef::Vector2(translation.x, translation.y));
+
+    transform = rotMat * transMat;
   }
 }
