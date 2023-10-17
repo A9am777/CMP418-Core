@@ -5,6 +5,7 @@
 #include <map>
 #include <list>
 #include <maths/vector2.h>
+#include "TextureWorks.h"
 
 namespace Animation
 {
@@ -15,6 +16,8 @@ namespace Animation
     {
       gef::Vector2 translation;
       gef::Vector2 skew;
+
+      void assignTo(gef::Matrix44& transform) const;
     };
 
     // Expensive bone information to offload
@@ -36,10 +39,12 @@ namespace Animation
     // Slow
     DetailedBone& addBone(Label name);
     bool bake(); // Build an optimised representation of the skeleton
+    UInt getBoneHeapID(Label name) const;
     //
 
+    inline void setLocal(UInt heapID, const gef::Matrix44& localMat) { boneHeap[heapID].localTransform = localMat; }
+    inline size_t getBoneCount() const { return boneHeap.size(); }
     inline bool isBaked() const { return !boneHeap.empty(); }
-
     void forwardKinematics();
 
     private:
@@ -65,5 +70,65 @@ namespace Animation
     };
     std::vector<HeapedBone> boneHeap;
     //
+  };
+
+  class Skeleton2DSlots
+  {
+    public:
+
+    void bake(const Skeleton2D& skele);
+
+    void addSlot(Label boneName, Label skinHook);
+    std::string getSkinSlot(Label boneName) const;
+
+    private:
+    std::map<std::string, std::string> slotMap;
+    std::vector<UInt> bakedDrawOrder; // Bone heap to draw order
+  };
+
+  // Assigns a transform and subtexture to each bone part
+  class Skeleton2DSkin
+  {
+    public:
+
+    void bake(const Skeleton2D& skele, const Skeleton2DSlots& slots, const Textures::TextureAtlas& atlas);
+
+    void addLink(Label slotName, Label subTextureName, const Skeleton2D::BonePoseOffset& offset);
+
+    private:
+    struct DetailedSkinPart
+    {
+      std::string subName; // The name of the designated subtexture part
+      Skeleton2D::BonePoseOffset offset;
+    };
+    struct SkinPart
+    {
+      gef::Matrix44 offsetTransform;
+      UInt subtextureID;
+    };
+
+    std::map<std::string, DetailedSkinPart> slots; // Slot to transform mapped to skin data
+    std::vector<SkinPart> bakedSubtextureLinks; // Bone heap to its subtexture and transform
+  };
+
+  // Full ensemble
+  class SkinnedSkeleton2D
+  {
+    public:
+    SkinnedSkeleton2D();
+
+    void update(float dt);
+    void render(gef::SpriteRenderer& renderer);
+
+    inline UInt addSkin() { skins.emplace_back(); return static_cast<UInt>(skins.size() - 1); }
+    inline void setSkin(UInt id) { currentSkin = id; }
+    inline Skeleton2DSkin& getSkin(UInt id) { return skins[id]; }
+
+    private:
+    Skeleton2DSlots slots;
+    std::vector<Skeleton2DSkin> skins;
+    UInt currentSkin;
+    Textures::TextureAtlas atlas;
+    Skeleton2D skeleton;
   };
 }

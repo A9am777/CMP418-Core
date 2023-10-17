@@ -12,6 +12,8 @@ namespace IO
   {
     public:
     static bool parseSkeleton(Animation::Skeleton2D& out, const rapidjson::Document& json);
+    static bool parseSlots(Animation::Skeleton2DSlots& out, const rapidjson::Value& node);
+    static bool parseSkin(Animation::Skeleton2DSkin& out, const rapidjson::Value& node);
     static bool parseAnimationAtlas(Textures::TextureCollection& collection, Textures::TextureAtlas& out, const rapidjson::Document& json);
   };
 }

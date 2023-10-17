@@ -46,9 +46,7 @@ namespace Animation
         // First, build self at the designated location
         {
           auto& heapParent = boneHeap[allocProgress];
-          heapParent.localTransform.SetIdentity();
-          heapParent.localTransform.RotationZ(gef::DegToRad(parent.restPose.skew.x));
-          heapParent.localTransform.SetTranslation(gef::Vector4(parent.restPose.translation.x, parent.restPose.translation.y, .0f));
+          parent.restPose.assignTo(heapParent.localTransform);
         }
 
         // Now explore children
@@ -73,6 +71,17 @@ namespace Animation
     }
 
     return isBaked();
+  }
+
+  UInt Skeleton2D::getBoneHeapID(Label name) const
+  {
+    if (!isBaked()) { return SNULL; }
+    
+    auto& desc = *detailedDescriptor;
+    auto boneDescIt = desc.names.find(name);
+    if (boneDescIt == desc.names.end()) { return SNULL; }
+    
+    return desc.boneCollection[boneDescIt->second].heapID;
   }
 
   void Skeleton2D::forwardKinematics()
@@ -113,5 +122,61 @@ namespace Animation
         parentBone.children.push_back(static_cast<UInt>(childID));
       }
     }
+  }
+
+  void Skeleton2DSlots::bake(const Skeleton2D& skele)
+  {
+    // Build the draw order
+    {
+      UInt order = 0;
+      bakedDrawOrder.resize(skele.getBoneCount());
+      for (auto& slot : slotMap)
+      {
+        bakedDrawOrder[skele.getBoneHeapID(slot.first)] = order;
+        ++order;
+      }
+    }
+  }
+
+  void Skeleton2DSlots::addSlot(Label boneName, Label skinHook)
+  {
+    slotMap.insert({ boneName, skinHook });
+  }
+
+  std::string Skeleton2DSlots::getSkinSlot(Label boneName) const
+  {
+    auto slotIt = slotMap.find(boneName);
+    if (slotIt == slotMap.end()) { return ""; }
+    return slotIt->second;
+  }
+
+  SkinnedSkeleton2D::SkinnedSkeleton2D()
+  {
+    currentSkin = 0;
+  }
+
+  void SkinnedSkeleton2D::update(float dt)
+  {
+  }
+
+  void SkinnedSkeleton2D::render(gef::SpriteRenderer& renderer)
+  {
+  }
+
+  void Skeleton2DSkin::bake(const Skeleton2D& skele, const Skeleton2DSlots& slots, const Textures::TextureAtlas& atlas)
+  {
+
+  }
+
+  void Skeleton2DSkin::addLink(Label slotName, Label subTextureName, const Skeleton2D::BonePoseOffset& offset)
+  {
+    slots.insert({ slotName, {subTextureName, offset} });
+  }
+
+  void Skeleton2D::BonePoseOffset::assignTo(gef::Matrix44& transform) const
+  {
+    transform.SetIdentity();
+    transform.RotationZ(gef::DegToRad(skew.x));
+    transform.SetTranslation(gef::Vector4(translation.x, translation.y, .0f));
   }
 }

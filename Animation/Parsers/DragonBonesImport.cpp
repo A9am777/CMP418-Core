@@ -40,6 +40,8 @@ namespace IO
   ImplGetImmediate(int, GetInt)
   ImplGetImmediate(UInt, GetUint)
 
+  using namespace Animation;
+
   bool parseBoneTransform(Animation::Skeleton2D::BonePoseOffset& out, const rapidjson::Value& node)
   {
     if (!node.HasMember("transform")) { return false; }
@@ -80,6 +82,53 @@ namespace IO
     out.forwardKinematics();
     return out.bake();
   }
+
+  bool DragonBonesImporter::parseSlots(Animation::Skeleton2DSlots& out, const rapidjson::Value& node)
+  {
+    if (!node.HasMember("slot")) { return false; }
+
+    auto slotsNode = node["slot"].GetArray();
+    for (auto& slotNode : slotsNode)
+    {
+      std::string name;
+      std::string parent;
+      if (getValue(slotNode, "name", name) && getValue(slotNode, "parent", parent))
+      {
+        out.addSlot(parent, name);
+      }
+    }
+
+    return true;
+  }
+
+  bool DragonBonesImporter::parseSkin(Animation::Skeleton2DSkin& out, const rapidjson::Value& node)
+  {
+    if (!node.HasMember("slot")) { return false; }
+
+    auto slotsNode = node["slot"].GetArray();
+    for (auto& slotNode : slotsNode)
+    {
+      std::string slotName;
+      if (!getValue(slotNode, "name", slotName)) { continue; }
+      
+      if (slotNode.HasMember("display"))
+      {
+        // TODO: why can display be an array
+        auto displayNodes = slotNode.GetArray();
+        auto& displayNode = *displayNodes.Begin();
+
+        std::string displayName;
+        Skeleton2D::BonePoseOffset transform;
+        if (!getValue(displayNode, "name", displayName)) { continue; }
+        parseBoneTransform(transform, displayNode);
+
+        out.addLink(slotName, displayName, transform);
+      }
+    }
+
+    return true;
+  }
+
   bool DragonBonesImporter::parseAnimationAtlas(Textures::TextureCollection& collection, Textures::TextureAtlas& out, const rapidjson::Document& json)
   {
     using namespace Textures;
