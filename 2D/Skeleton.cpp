@@ -1,7 +1,9 @@
-#include "Skeleton.h"
-
-#include "maths/math_utils.h"
+#include <maths/math_utils.h>
+#include <graphics/sprite.h>
+#include <maths/matrix44.h>
 #include <functional>
+
+#include "Skeleton.h"
 
 namespace Animation
 {
@@ -124,47 +126,121 @@ namespace Animation
     }
   }
 
-  void Skeleton2DSlots::bake(const Skeleton2D& skele)
+  bool Skeleton2DSlots::bake(const Skeleton2D& skele)
   {
-    // Build the draw order
+    // Build the draw order as it relates to the optimised bone order
     {
-      UInt order = 0;
       bakedDrawOrder.resize(skele.getBoneCount());
       for (auto& slot : slotMap)
       {
-        bakedDrawOrder[skele.getBoneHeapID(slot.first)] = order;
-        ++order;
+        bakedDrawOrder[skele.getBoneHeapID(slot.second.boneName)] = slot.second.priority;
       }
     }
+
+    return isBaked();
   }
 
   void Skeleton2DSlots::addSlot(Label boneName, Label skinHook)
   {
-    slotMap.insert({ boneName, skinHook });
+    auto slotIt = slotMap.find(skinHook);
+    if (slotIt == slotMap.end())
+    {
+      slotMap.insert({ skinHook, 
+        {boneName, static_cast<UInt>(slotMap.size())}
+      });
+    }
   }
 
-  std::string Skeleton2DSlots::getSkinSlot(Label boneName) const
+  std::string Skeleton2DSlots::getSlotBone(Label slotName) const
   {
-    auto slotIt = slotMap.find(boneName);
+    auto slotIt = slotMap.find(slotName);
     if (slotIt == slotMap.end()) { return ""; }
-    return slotIt->second;
+    return slotIt->second.boneName;
   }
 
   SkinnedSkeleton2D::SkinnedSkeleton2D()
   {
     currentSkin = 0;
+    baked = false;
+  }
+
+  bool SkinnedSkeleton2D::bake(Textures::TextureAtlas* atlas)
+  {
+    baked = true;
+    baked = baked && skeleton.bake();
+    baked = baked && atlas->isBaked();
+
+    slots.bake(skeleton);
+    for (auto& skin : skins)
+    {
+      baked = baked && skin.bake(skeleton, slots, *atlas);
+    }
+
+    return baked;
   }
 
   void SkinnedSkeleton2D::update(float dt)
   {
+    skeleton.forwardKinematics();
   }
 
-  void SkinnedSkeleton2D::render(gef::SpriteRenderer& renderer)
+  void SkinnedSkeleton2D::render(gef::SpriteRenderer* renderer, const Textures::TextureCollection& textures)
   {
+    if (!atlas || !baked) { return; }
+
+    // Hold a sprite with the texture atlas
+    gef::Sprite sprite;
+    sprite.set_texture(textures.getTextureData(atlas->getTextureID()));
+
+    auto& skin = skins[currentSkin];
+
+    // Traverse the linear bone list
+    renderer->Begin();
+    for (UInt boneID = 0; boneID < skeleton.getBoneCount(); ++boneID)
+    {
+      auto divData = atlas->getData(skin.getSubtextureID(boneID));
+
+      // Assign texture region
+      sprite.set_uv_width(divData->uv.right - divData->uv.left);
+      sprite.set_uv_height(divData->uv.top - divData->uv.bottom);
+      sprite.set_uv_position({ divData->uv.left, divData->uv.bottom });
+      
+      // Resize
+      sprite.set_width(divData->size.x);
+      sprite.set_height(divData->size.y);
+      
+      // Compute the subtexture transform
+      gef::Matrix44 transform = skeleton.getBoneTransform(boneID); // World
+      transform = divData->transform * transform; // Subtexture offset transform
+
+      {
+        gef::Matrix33 worldTransform = Maths::maskMat44(transform);
+        renderer->DrawSprite(sprite, worldTransform);
+      }
+    }
+    renderer->End();
   }
 
-  void Skeleton2DSkin::bake(const Skeleton2D& skele, const Skeleton2DSlots& slots, const Textures::TextureAtlas& atlas)
+  bool Skeleton2DSkin::bake(const Skeleton2D& skele, const Skeleton2DSlots& slotMap, const Textures::TextureAtlas& atlas)
   {
+    if (!skele.isBaked() || !atlas.isBaked()) { return false; }
+
+    // Build the subtexture info as it relates to the optimised bone order
+    bakedSubtextureLinks.resize(skele.getBoneCount());
+    for (auto& slot : slots)
+    {
+      std::string boneName = slotMap.getSlotBone(slot.first);
+      UInt boneHeapID = skele.getBoneHeapID(boneName);
+      if (boneHeapID == SNULL) { continue; }
+
+      // Build the offset transform
+      auto& bakedLink = bakedSubtextureLinks[boneHeapID];
+      slot.second.offset.assignTo(bakedLink.offsetTransform);
+      
+      // Assign the atlas ID
+      UInt atlasDivisionID = atlas.getDivision(slot.second.subName);
+      bakedLink.subtextureID = atlasDivisionID == SNULL ? 0 : atlasDivisionID;
+    }
 
   }
 

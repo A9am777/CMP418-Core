@@ -5,6 +5,7 @@
 #include <map>
 #include <list>
 #include <maths/vector2.h>
+#include <graphics/sprite_renderer.h>
 #include "TextureWorks.h"
 
 namespace Animation
@@ -45,6 +46,7 @@ namespace Animation
     inline void setLocal(UInt heapID, const gef::Matrix44& localMat) { boneHeap[heapID].localTransform = localMat; }
     inline size_t getBoneCount() const { return boneHeap.size(); }
     inline bool isBaked() const { return !boneHeap.empty(); }
+    inline const gef::Matrix44& getBoneTransform(UInt heapID) const { return boneHeap[heapID].globalTransform; }
     void forwardKinematics();
 
     private:
@@ -76,13 +78,20 @@ namespace Animation
   {
     public:
 
-    void bake(const Skeleton2D& skele);
+    bool bake(const Skeleton2D& skele);
 
     void addSlot(Label boneName, Label skinHook);
-    std::string getSkinSlot(Label boneName) const;
+    std::string getSlotBone(Label slotName) const;
+
+    inline bool isBaked() const { return !bakedDrawOrder.empty(); }
 
     private:
-    std::map<std::string, std::string> slotMap;
+    struct DetailedSlotInfo
+    {
+      std::string boneName;
+      UInt priority; // Draw order
+    };
+    std::map<std::string, DetailedSlotInfo> slotMap; // Slot name to info
     std::vector<UInt> bakedDrawOrder; // Bone heap to draw order
   };
 
@@ -91,9 +100,13 @@ namespace Animation
   {
     public:
 
-    void bake(const Skeleton2D& skele, const Skeleton2DSlots& slots, const Textures::TextureAtlas& atlas);
+    bool bake(const Skeleton2D& skele, const Skeleton2DSlots& slotMap, const Textures::TextureAtlas& atlas);
 
     void addLink(Label slotName, Label subTextureName, const Skeleton2D::BonePoseOffset& offset);
+
+    inline bool isBaked() const { return !bakedSubtextureLinks.empty(); }
+    inline UInt getSubtextureID(UInt boneHeapID) const { return bakedSubtextureLinks[boneHeapID].subtextureID; }
+    inline const gef::Matrix44& getTransform(UInt boneHeapID) const { return bakedSubtextureLinks[boneHeapID].offsetTransform; }
 
     private:
     struct DetailedSkinPart
@@ -117,18 +130,24 @@ namespace Animation
     public:
     SkinnedSkeleton2D();
 
+    bool bake(Textures::TextureAtlas* atlas);
+
     void update(float dt);
-    void render(gef::SpriteRenderer& renderer);
+    void render(gef::SpriteRenderer* renderer, const Textures::TextureCollection& textures);
 
     inline UInt addSkin() { skins.emplace_back(); return static_cast<UInt>(skins.size() - 1); }
     inline void setSkin(UInt id) { currentSkin = id; }
     inline Skeleton2DSkin& getSkin(UInt id) { return skins[id]; }
+    inline Skeleton2D& getSkeleton() { return skeleton; }
+    inline Skeleton2DSlots& getSlots() { return slots; }
+    inline bool isBaked() const { return baked; }
 
     private:
     Skeleton2DSlots slots;
     std::vector<Skeleton2DSkin> skins;
     UInt currentSkin;
-    Textures::TextureAtlas atlas;
+    Textures::TextureAtlas* atlas;
     Skeleton2D skeleton;
+    bool baked;
   };
 }

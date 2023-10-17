@@ -36,7 +36,7 @@ namespace Textures
     void loadAll(gef::Platform& platform);
     UInt getTextureDesc(Path path, TextureDesc& out);
 
-    inline gef::Texture* getTextureData(UInt id) { return id < textures.size() ? textures[id] : nullptr; }
+    inline const gef::Texture* getTextureData(UInt id) const { return id < textures.size() ? textures[id] : nullptr; }
 
     private:
     struct DetailedTexture
@@ -66,7 +66,7 @@ namespace Textures
     // SLOW //
     bool bake(UInt textureID, const TextureDesc& desc); // Generates parametrised data
     UInt addDivision(Label name, const SubTextureDesc& division);
-    UInt getDivision(Label name);
+    UInt getDivision(Label name) const;
     //
     
     inline bool isBaked() const { return regions != nullptr; }

@@ -22,7 +22,7 @@ namespace Textures
     return newID;
   }
 
-  UInt TextureAtlas::getDivision(Label name)
+  UInt TextureAtlas::getDivision(Label name) const
   {
     auto divIt = divisionNames.find(name);
     if (divIt != divisionNames.end())

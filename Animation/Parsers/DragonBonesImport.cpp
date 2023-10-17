@@ -54,18 +54,14 @@ namespace IO
     return true;
   }
 
-  bool DragonBonesImporter::parseSkeleton(Animation::Skeleton2D& out, const rapidjson::Document& json)
+  bool DragonBonesImporter::parseSkeleton(Animation::Skeleton2D& out, const rapidjson::Value& node)
   {
     using namespace Animation;
 
-    if (!json.HasMember("armature") || !json["armature"].IsArray()) { return false; }
-    
     // Fetch all bones
-    auto armatureNode = json["armature"].GetArray();
-    auto armatureRootNode = armatureNode[0].GetObject();
-    if (!armatureRootNode.HasMember("bone")) { return false; }
+    if (!node.HasMember("bone")) { return false; }
     {
-      auto bonesNode = armatureRootNode["bone"].GetArray();
+      auto bonesNode = node["bone"].GetArray();
       for (auto& boneNode : bonesNode)
       {
         if (!boneNode.HasMember("name")) { continue; }
@@ -114,7 +110,7 @@ namespace IO
       if (slotNode.HasMember("display"))
       {
         // TODO: why can display be an array
-        auto displayNodes = slotNode.GetArray();
+        auto displayNodes = slotNode["display"].GetArray();
         auto& displayNode = *displayNodes.Begin();
 
         std::string displayName;
@@ -123,6 +119,35 @@ namespace IO
         parseBoneTransform(transform, displayNode);
 
         out.addLink(slotName, displayName, transform);
+      }
+    }
+
+    return true;
+  }
+
+  bool DragonBonesImporter::parseSkinnedSkeleton(Animation::SkinnedSkeleton2D& out, const rapidjson::Document& json)
+  {
+    // TODO: why is armature an array
+    if (!json.HasMember("armature") || !json["armature"].IsArray()) { return false; }
+
+    // Fetch the root armature
+    auto armaturesNode = json["armature"].GetArray();
+    auto armatureRootNode = armaturesNode[0].GetObject();
+
+    // Now for the bones
+    parseSkeleton(out.getSkeleton(), armatureRootNode);
+
+    // Slots!
+    parseSlots(out.getSlots(), armatureRootNode);
+
+    // Iterate all skins
+    if (armatureRootNode.HasMember("skin"))
+    {
+      auto skinsNode = armatureRootNode["skin"].GetArray();
+      for (auto& skinNode : skinsNode)
+      {
+        UInt skinID = out.addSkin();
+        parseSkin(out.getSkin(skinID), skinNode);
       }
     }
 
