@@ -43,6 +43,8 @@ namespace Animation
     UInt getBoneHeapID(Label name) const;
     //
 
+    // The root bone stores the transform for the entire rig!
+    void setWorldTransform(const gef::Matrix33& worldMat) { boneHeap[0].globalTransform = worldMat; }
     inline void setLocal(UInt heapID, const gef::Matrix33& localMat) { boneHeap[heapID].localTransform = localMat; }
     inline size_t getBoneCount() const { return boneHeap.size(); }
     inline bool isBaked() const { return !boneHeap.empty(); }
