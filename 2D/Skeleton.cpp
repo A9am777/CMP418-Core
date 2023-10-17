@@ -132,12 +132,15 @@ namespace Animation
 
   bool Skeleton2DSlots::bake(const Skeleton2D& skele)
   {
-    // Build the draw order as it relates to the optimised bone order
+    // Build a lookup from the draw order to optimised bone order
     {
       bakedDrawOrder.resize(skele.getBoneCount());
       for (auto& slot : slotMap)
       {
-        bakedDrawOrder[skele.getBoneHeapID(slot.second.boneName)] = slot.second.priority;
+        // Search for the heap bone
+        UInt boneHeapID = skele.getBoneHeapID(slot.second.boneName);
+        // Use the root bone on failure as a precaution as it typically isn't visible
+        bakedDrawOrder[slot.second.priority] = (boneHeapID == SNULL) ? 0 : boneHeapID;
       }
     }
 
@@ -203,44 +206,28 @@ namespace Animation
 
     auto& skin = skins[currentSkin];
 
-    // Traverse the linear bone list
-    for (UInt boneID = 1; boneID < skeleton.getBoneCount(); ++boneID)
+    // Traverse the draw list
+    for (size_t i = 0; i < skeleton.getBoneCount(); ++i)
     {
-      auto divData = atlas->getData(skin.getSubtextureID(boneID));
-
-      // Assign texture region
-      sprite.set_uv_width(divData->uv.right - divData->uv.left);
-      sprite.set_uv_height(divData->uv.top - divData->uv.bottom);
-      sprite.set_uv_position({ divData->uv.left, divData->uv.bottom });
-      
-      // Resize
-      //sprite.set_width(divData->size.x * 100);
-      //sprite.set_height(divData->size.y * 100);
-
-      // Set draw order
-      sprite.set_position(480, 480, slots.getOrder(boneID));
-      
-      // Compute the subtexture transform
-      gef::Matrix33 transform = skeleton.getBoneTransform(boneID); // World
-      
-      gef::Matrix33 finalTransform = gef::Matrix33::kIdentity;
-      
+      // Convert to the optimised bone index
+      if (UInt boneHeapID = slots.getBoneID(i)) // We don't need to draw the root
       {
-        gef::Matrix33 interm = gef::Matrix33::kIdentity;
+        auto divData = atlas->getData(skin.getSubtextureID(boneHeapID));
 
-        interm = gef::Matrix33::kIdentity;
-        interm.Scale(gef::Vector2(0.5, 0.5));
+        // Assign texture region
+        sprite.set_uv_width(divData->uv.right - divData->uv.left);
+        sprite.set_uv_height(divData->uv.top - divData->uv.bottom);
+        sprite.set_uv_position({ divData->uv.left, divData->uv.bottom });
 
-        finalTransform = finalTransform * interm;
+        // Build the sprite transform
+        gef::Matrix33 finalTransform = gef::Matrix33::kIdentity;
+        finalTransform = skeleton.getBoneTransform(boneHeapID) * finalTransform; // Apply world
+        finalTransform = skin.getTransform(boneHeapID) * finalTransform; // Apply sprite offset
+        finalTransform = divData->transform * finalTransform; // Apply subtexture offset
+        
+        // TODO: sprite offset and subtexture transforms can be precomputed on skin swap!
 
-        interm = gef::Matrix33::kIdentity;
-        interm.SetTranslation(gef::Vector2(250, 250));
-
-        finalTransform = finalTransform * interm;
-      }
-
-      finalTransform = divData->transform * skin.getTransform(boneID) * transform * finalTransform;
-      {
+        // Render!
         renderer->DrawSprite(sprite, finalTransform);
       }
     }

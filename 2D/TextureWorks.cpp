@@ -16,7 +16,7 @@ namespace Textures
 
   UInt TextureAtlas::addDivision(Label name, const SubTextureDesc& division)
   {
-    UInt newID = static_cast<UInt>(subDivisions.size() - 1);
+    UInt newID = static_cast<UInt>(subDivisions.size());
     subDivisions.push_back(division);
     divisionNames.insert({ name, newID });
     return newID;

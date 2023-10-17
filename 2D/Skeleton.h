@@ -84,7 +84,7 @@ namespace Animation
     std::string getSlotBone(Label slotName) const;
 
     inline bool isBaked() const { return !bakedDrawOrder.empty(); }
-    inline UInt getOrder(UInt boneHeapID) const { return bakedDrawOrder[boneHeapID]; }
+    inline UInt getBoneID(UInt idxDraw) const { return bakedDrawOrder[idxDraw]; }
 
     private:
     struct DetailedSlotInfo
@@ -93,7 +93,7 @@ namespace Animation
       UInt priority; // Draw order
     };
     std::map<std::string, DetailedSlotInfo> slotMap; // Slot name to info
-    std::vector<UInt> bakedDrawOrder; // Bone heap to draw order
+    std::vector<UInt> bakedDrawOrder; // Draw order to bone heap (lookup)
   };
 
   // Assigns a transform and subtexture to each bone part
