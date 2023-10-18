@@ -1,11 +1,12 @@
 #pragma once
-#include "../Defs.h"
-#include <maths/matrix44.h>
+
+#include <maths/matrix33.h>
+#include <maths/vector2.h>
+#include <graphics/sprite_renderer.h>
 #include <vector>
 #include <map>
 #include <list>
-#include <maths/vector2.h>
-#include <graphics/sprite_renderer.h>
+#include "../Defs.h"
 #include "TextureWorks.h"
 
 namespace Animation
@@ -69,6 +70,7 @@ namespace Animation
     struct HeapedBone
     {
       UInt parent;
+      gef::Matrix33 restTransform;
       gef::Matrix33 localTransform;
       gef::Matrix33 globalTransform;
     };
@@ -79,6 +81,7 @@ namespace Animation
   class Skeleton2DSlots
   {
     public:
+    Skeleton2DSlots() = default;
 
     bool bake(const Skeleton2D& skele);
 
@@ -102,6 +105,7 @@ namespace Animation
   class Skeleton2DSkin
   {
     public:
+    Skeleton2DSkin() = default;
 
     bool bake(const Skeleton2D& skele, const Skeleton2DSlots& slotMap, const Textures::TextureAtlas& atlas);
 

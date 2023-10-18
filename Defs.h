@@ -12,6 +12,7 @@ typedef const std::string& Path;
 typedef int Int;
 
 // Unsigned types
+typedef unsigned char Byte;
 typedef unsigned int UInt;
 static constexpr UInt SNULL = ~0; // Signed null in unsigned type
 

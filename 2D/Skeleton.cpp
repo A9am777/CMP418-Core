@@ -48,7 +48,8 @@ namespace Animation
         // First, build self at the designated location
         {
           auto& heapParent = boneHeap[allocProgress];
-          parent.restPose.assignTo(heapParent.localTransform);
+          parent.restPose.assignTo(heapParent.restTransform);
+          heapParent.localTransform.SetIdentity();
         }
 
         // Now explore children
@@ -96,7 +97,7 @@ namespace Animation
     {
       auto& thisBone = boneHeap[i];
       auto& thisParent = boneHeap[thisBone.parent];
-      thisBone.globalTransform = thisBone.localTransform * thisParent.globalTransform;
+      thisBone.globalTransform = thisBone.restTransform * thisBone.localTransform * thisParent.globalTransform;
     }
   }
 
