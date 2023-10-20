@@ -2,14 +2,14 @@
 
 namespace Animation
 {
-  DopeSheet2D::DopeSheet2D() : sheetDuration{ .0f }, sheetStep{1.f/60.f}
+  DopeSheet2D::DopeSheet2D() : sheetDuration{ .0f }, sheetRate{60.f}
   {
 
   }
 
-  DopeSheet2D::BakedTrack DopeSheet2D::bakeTrack(const DetailedTrack& track) const
+  DopeSheet2D::BakedTrack* DopeSheet2D::bakeTrack(const DetailedTrack& track) const
   {
-    BakedTrack out;
+    BakedTrack* out = new BakedTrack();
 
     // Bake the track for each attribute
     for (Byte attributeID = 0; attributeID < AttributeType::AttributeCount; ++attributeID)
@@ -18,13 +18,18 @@ namespace Animation
       if (subTrack.size())
       {
         // This track is in use, start build
-        out.subTracks.emplace_back();
-        auto& subProgress = out.subTracks.back();
+        out->subTracks.emplace_back();
+        auto& subProgress = out->subTracks.back();
         
         gef::Matrix33 transformProgress = gef::Matrix33::kIdentity;
+        float rotationProgress = .0f;
         float durationProgress = .0f;
+
         for (auto& unrefinedKey : subTrack)
         {
+          transformProgress = gef::Matrix33::kIdentity;
+          rotationProgress = .0f;
+
           durationProgress += unrefinedKey.duration;
 
           // Build and apply a transformation matrix for this key according to its type
@@ -39,9 +44,7 @@ namespace Animation
             break;
             case AttributeRotation:
             {
-              gef::Matrix33 rotationMatrix = gef::Matrix33::kIdentity;
-              rotationMatrix.Rotate(unrefinedKey.values[0]);
-              transformProgress = transformProgress * rotationMatrix;
+              rotationProgress += unrefinedKey.values[0]; // Note that this is lerp compliant!
             }
             break;
             default: throw; // TODO: implement
@@ -52,12 +55,19 @@ namespace Animation
           {
             auto& freshKey = subProgress.back();
             freshKey.targetTransform = transformProgress;
+            freshKey.angle = rotationProgress;
             freshKey.endTime = durationProgress;
             freshKey.easeIn = unrefinedKey.easeIn;
             freshKey.easeOut = unrefinedKey.easeOut;
           }
         }
       }
+    }
+
+    if (!out->getAttributeTrackCount())
+    {
+      delete out;
+      return nullptr;
     }
 
     return out;
@@ -97,5 +107,93 @@ namespace Animation
       out,
       duration
     });
+  }
+
+  gef::Matrix33 DopeSheet2D::BakedTrack::applyTransform(float relativeTime, const Keyframe& first, const Keyframe& next)
+  {
+    float span = next.endTime - first.endTime;
+    float norm = std::max((next.endTime - relativeTime) / span, .0f);
+
+    // TODO: easing
+    auto& in = first.easeIn;
+    auto& out = next.easeOut;
+
+    gef::Matrix33 uniformTransform = gef::Matrix33::kIdentity;
+    for (size_t i = 0; i < 9; ++i)
+    {
+      reinterpret_cast<float*>(uniformTransform.m)[i] = lerp(reinterpret_cast<const float*>(&first.targetTransform.m)[i], reinterpret_cast<const float*>(&next.targetTransform.m)[i], norm);
+    }
+
+    // TODO: surely there is a better way to do this
+    gef::Matrix33 rotationTransform = gef::Matrix33::kIdentity;
+    rotationTransform.Rotate(lerp(first.angle, next.angle, norm)); // Using accumulated angle therefore lerp is valid!
+
+    return rotationTransform * uniformTransform;
+  }
+
+  float DopeSheet2D::BakedTrack::lerp(float a, float b, float t)
+  {
+    return a * (1.f-t) + b * t;
+  }
+
+  DopePlayer2D::DopePlayer2D() : sheet{ nullptr }, time{ .0f }, scaledTime{ .0f }, playing{ false }
+  {
+
+  }
+
+  gef::Matrix33 DopePlayer2D::getCurrentTransform(size_t trackID)
+  {
+    auto& track = tracks[trackID];
+    
+    gef::Matrix33 transform = gef::Matrix33::kIdentity;
+    if (track.trackPtr == nullptr) { return transform; }
+
+    for (size_t subID = 0; subID < track.keyPointers.size(); ++subID)
+    {
+      auto& currentKeyID = track.keyPointers[subID];
+
+      // Key target
+      const DopeSheet2D::Keyframe* currentKey = &track.trackPtr->getKey(subID, currentKeyID);
+      // Validate target key according to the current time
+      if (currentKey->endTime < scaledTime && currentKeyID + 1 < track.trackPtr->getKeyframeCount(subID))
+      {
+        currentKey = &track.trackPtr->getKey(subID, ++currentKeyID);
+      }
+
+      const DopeSheet2D::Keyframe* nextKey = &track.trackPtr->getKey(subID, currentKeyID + 1);
+
+      transform = transform * track.trackPtr->applyTransform(scaledTime, *currentKey, *nextKey);
+    }
+
+    return transform;
+  }
+
+  void DopePlayer2D::setTrack(size_t idx, DopeSheet2D::BakedTrack* trackPtr)
+  {
+    auto& tracker = tracks[idx];
+    if (tracker.trackPtr = trackPtr)
+    {
+      tracker.keyPointers.resize(trackPtr->getAttributeTrackCount());
+      std::fill(tracker.keyPointers.begin(), tracker.keyPointers.end(), 0);
+    }
+  }
+
+  void DopePlayer2D::reset()
+  {
+    for (auto& ptr : tracks) { std::fill(ptr.keyPointers.begin(), ptr.keyPointers.end(), 0); }
+  }
+
+  void DopePlayer2D::update(float dt)
+  {
+    if (!isPlaying()) { return; }
+
+    time += dt;
+    scaledTime = time * sheet->getRate();
+    if (scaledTime > sheet->getDuration())
+    {
+      reset();
+      scaledTime = fmodf(scaledTime, sheet->getDuration());
+      time = scaledTime / sheet->getRate();
+    }
   }
 }

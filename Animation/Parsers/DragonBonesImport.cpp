@@ -2,6 +2,7 @@
 
 #include <map>
 #include <list>
+#include <maths/math_utils.h>
 
 namespace IO
 {
@@ -168,7 +169,7 @@ namespace IO
             getValue(rotNode, "tweenEasing", easing);
             getValue(rotNode, "rotate", rotOffset);
 
-            out.addRotationKeyframe(track, duration, rotOffset);
+            out.addRotationKeyframe(track, duration, gef::DegToRad(rotOffset));
           }
         }
       }

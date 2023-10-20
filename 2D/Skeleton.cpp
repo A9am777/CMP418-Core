@@ -110,7 +110,7 @@ namespace Animation
     {
       auto& thisBone = boneHeap[i];
       auto& thisParent = boneHeap[thisBone.parent];
-      thisBone.globalTransform = thisBone.restTransform * thisBone.localTransform * thisParent.globalTransform;
+      thisBone.globalTransform = thisBone.localTransform * thisBone.restTransform * thisParent.globalTransform;
     }
   }
 
@@ -186,6 +186,11 @@ namespace Animation
     baked = false;
   }
 
+  SkinnedSkeleton2D::~SkinnedSkeleton2D()
+  {
+    wipeBakedAnimations();
+  }
+
   bool SkinnedSkeleton2D::bake(Textures::TextureAtlas* atlasTextures)
   {
     baked = true;
@@ -201,23 +206,24 @@ namespace Animation
 
     // Animations
     {
-      animations.clear();
+      wipeBakedAnimations();
       animations.resize(detailedAnimationData.dopeCollection.size());
       for (UInt animID = 0; animID < animations.size(); ++animID)
       {
         auto& detailedSheet = detailedAnimationData.dopeCollection[animID];
 
         auto& slotTracks = animations[animID];
-        slotTracks.resize(skeleton.getBoneCount());
+        slotTracks.resize(skeleton.getBoneCount(), nullptr);
 
         detailedSheet.inspectTracks([&](Label slotName, const DopeSheet2D::DetailedTrack& detailedTrack) {
-          UInt boneHeapID = skeleton.getBoneHeapID(slotName); //TODO: is this slot or bone name???
+          UInt boneHeapID = skeleton.getBoneHeapID(slotName); //TODO: is this the slot or bone name???
           if (boneHeapID == SNULL) { return; }
 
           // Place the baked track in the same location as the bone
           slotTracks[boneHeapID] = detailedSheet.bakeTrack(detailedTrack);
         });
       }
+      setAnimation(0);
     }
 
     return baked;
@@ -226,6 +232,18 @@ namespace Animation
   void SkinnedSkeleton2D::update(float dt)
   {
     skeleton.resetPose();
+    animationPlayer.update(dt);
+
+    for (size_t i = 0; i < skeleton.getBoneCount(); ++i)
+    {
+      // Convert to the optimised bone index
+      if (UInt boneHeapID = slots.getBoneID(i)) // We don't need to draw the root
+      {
+        // Apply the current animation
+        auto& localPose = skeleton.getLocalPose(boneHeapID);
+        localPose = localPose * animationPlayer.getCurrentTransform(boneHeapID);
+      }
+    }
 
     skeleton.forwardKinematics();
   }
@@ -282,9 +300,41 @@ namespace Animation
     return it->second;
   }
 
+  void SkinnedSkeleton2D::setAnimation(UInt animID)
+  {
+    currentAnimation = animID;
+    if (isBaked())
+    {
+      // Copy animation data over to the player
+      animationPlayer.setSheet(&detailedAnimationData.dopeCollection[animID]);
+      animationPlayer.resizeTracks(skeleton.getBoneCount());
+      auto& bakedTracks = animations[animID];
+      for (size_t trackID = 0; trackID < bakedTracks.size(); ++trackID)
+      {
+        animationPlayer.setTrack(trackID, bakedTracks[trackID]);
+      }
+
+      animationPlayer.reset();
+      setPlay(true);
+    }
+  }
+
   DopeSheet2D::DetailedTrack& SkinnedSkeleton2D::getAnimationTrack(UInt animID, Label slotName)
   {
     return detailedAnimationData.dopeCollection[animID].getTrack(slotName);
+  }
+
+  void SkinnedSkeleton2D::wipeBakedAnimations()
+  {
+    for (auto& bakedAnimation : animations)
+    {
+      for (auto& bakedTrack : bakedAnimation)
+      {
+        delete bakedTrack;
+      }
+    }
+    animations.clear();
+    currentAnimation = 0;
   }
 
   bool Skeleton2DSkin::bake(const Skeleton2D& skele, const Skeleton2DSlots& slotMap, const Textures::TextureAtlas& atlas)

@@ -140,6 +140,7 @@ namespace Animation
   {
     public:
     SkinnedSkeleton2D();
+    ~SkinnedSkeleton2D();
 
     bool bake(Textures::TextureAtlas* atlas);
 
@@ -147,6 +148,8 @@ namespace Animation
     void render(gef::SpriteRenderer* renderer, const Textures::TextureCollection& textures);
 
     UInt addAnimation(Label name);
+    void setAnimation(UInt anim);
+    void setPlay(bool animationPlay) { animationPlayer.setPlaying(animationPlay); }
     inline DopeSheet2D& getAnimationData(UInt animID) { return detailedAnimationData.dopeCollection[animID]; }
     DopeSheet2D::DetailedTrack& getAnimationTrack(UInt animID, Label slotName);
 
@@ -164,6 +167,8 @@ namespace Animation
       std::vector<DopeSheet2D> dopeCollection;
     };
 
+    void wipeBakedAnimations();
+
     Skeleton2DSlots slots;
     std::vector<Skeleton2DSkin> skins;
     UInt currentSkin;
@@ -172,7 +177,9 @@ namespace Animation
     Skeleton2D skeleton;
 
     DetailedAnimations detailedAnimationData;
-    std::vector<std::vector<DopeSheet2D::BakedTrack>> animations;
+    std::vector<std::vector<DopeSheet2D::BakedTrack*>> animations;
+    DopePlayer2D animationPlayer;
+    UInt currentAnimation;
 
     bool baked;
   };
