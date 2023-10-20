@@ -90,6 +90,19 @@ namespace Animation
     return desc.boneCollection[boneDescIt->second].heapID;
   }
 
+  gef::Matrix33& Skeleton2D::getLocalPose(UInt heapID)
+  {
+    return boneHeap[heapID].localTransform;
+  }
+
+  void Skeleton2D::resetPose()
+  {
+    for (size_t i = 1; i < boneHeap.size(); ++i)
+    {
+      boneHeap[i].localTransform.SetIdentity();
+    }
+  }
+
   void Skeleton2D::forwardKinematics()
   {
     // Start after the root and traverse the tree linearly

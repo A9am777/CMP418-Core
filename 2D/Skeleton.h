@@ -50,7 +50,10 @@ namespace Animation
     inline size_t getBoneCount() const { return boneHeap.size(); }
     inline bool isBaked() const { return !boneHeap.empty(); }
     inline const gef::Matrix33& getBoneTransform(UInt heapID) const { return boneHeap[heapID].globalTransform; }
-    void forwardKinematics();
+    
+    gef::Matrix33& getLocalPose(UInt heapID); // Fetch the local pose of this bone so transforms can be applied
+    void resetPose(); // Reset all local transforms so new ones can be applied
+    void forwardKinematics(); // Compute world transforms down the skeletal structure
 
     private:
     void linkDescriptor(); // Propagate skeletal structure
