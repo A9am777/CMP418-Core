@@ -123,6 +123,60 @@ namespace IO
     return true;
   }
 
+  bool DragonBonesImporter::parseBoneAnimationKeyframes(Animation::DopeSheet2D& out, const rapidjson::Value& node)
+  {
+    if (!node.HasMember("bone") || !node["bone"].IsArray()) { return false; }
+
+    auto boneNodes = node["bone"].GetArray();
+    for (auto& boneNode : boneNodes)
+    {
+      std::string boneName;
+      if (getValue(boneNode, "name", boneName))
+      {
+        auto& track = out.getTrack(boneName);
+
+        // Check for translations
+        if (boneNode.HasMember("translateFrame") && boneNode["translateFrame"].IsArray())
+        {
+          auto transNodes = boneNode["translateFrame"].GetArray();
+          for (auto& transNode : transNodes)
+          {
+            float duration;
+            float easing;
+            gef::Vector2 offset;
+
+            getValue(transNode, "duration", duration);
+            getValue(transNode, "tweenEasing", easing);
+            getValue(transNode, "x", offset.x);
+            getValue(transNode, "y", offset.y);
+
+            out.addTranslationKeyframe(track, duration, offset);
+          }
+        }
+
+        // Check for rotations
+        if (boneNode.HasMember("rotateFrame") && boneNode["rotateFrame"].IsArray())
+        {
+          auto rotNodes = boneNode["rotateFrame"].GetArray();
+          for (auto& rotNode : rotNodes)
+          {
+            float duration;
+            float easing;
+            float rotOffset;
+
+            getValue(rotNode, "duration", duration);
+            getValue(rotNode, "tweenEasing", easing);
+            getValue(rotNode, "rotate", rotOffset);
+
+            out.addRotationKeyframe(track, duration, rotOffset);
+          }
+        }
+      }
+    }
+
+    return false;
+  }
+
   bool DragonBonesImporter::parseSkinnedSkeleton(Animation::SkinnedSkeleton2D& out, const rapidjson::Document& json)
   {
     // TODO: why is armature an array
@@ -146,6 +200,23 @@ namespace IO
       {
         UInt skinID = out.addSkin();
         parseSkin(out.getSkin(skinID), skinNode);
+      }
+    }
+
+    // Iterate all animations
+    if (armatureRootNode.HasMember("animation") && armatureRootNode["animation"].IsArray())
+    {
+      auto animationNodes = armatureRootNode["animation"].GetArray();
+      for (auto& animationNode : animationNodes)
+      {
+        float animDuration;
+        std::string animName;
+
+        if (getValue(animationNode, "name", animName) && getValue(animationNode, "duration", animDuration))
+        {
+          DopeSheet2D sheet;
+          parseBoneAnimationKeyframes(sheet, animationNode);
+        }
       }
     }
 
