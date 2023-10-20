@@ -8,6 +8,7 @@
 #include <list>
 #include "../Defs.h"
 #include "TextureWorks.h"
+#include "DopeSheet.h"
 
 namespace Animation
 {
@@ -145,6 +146,10 @@ namespace Animation
     void update(float dt);
     void render(gef::SpriteRenderer* renderer, const Textures::TextureCollection& textures);
 
+    UInt addAnimation(Label name);
+    inline DopeSheet2D& getAnimationData(UInt animID) { return detailedAnimationData.dopeCollection[animID]; }
+    DopeSheet2D::DetailedTrack& getAnimationTrack(UInt animID, Label slotName);
+
     inline UInt addSkin() { skins.emplace_back(); return static_cast<UInt>(skins.size() - 1); }
     inline void setSkin(UInt id) { currentSkin = id; }
     inline Skeleton2DSkin& getSkin(UInt id) { return skins[id]; }
@@ -153,11 +158,22 @@ namespace Animation
     inline bool isBaked() const { return baked; }
 
     private:
+    struct DetailedAnimations
+    {
+      std::map<std::string, UInt> dopeNames;
+      std::vector<DopeSheet2D> dopeCollection;
+    };
+
     Skeleton2DSlots slots;
     std::vector<Skeleton2DSkin> skins;
     UInt currentSkin;
+
     Textures::TextureAtlas* atlas;
     Skeleton2D skeleton;
+
+    DetailedAnimations detailedAnimationData;
+    std::vector<std::vector<DopeSheet2D::BakedTrack>> animations;
+
     bool baked;
   };
 }

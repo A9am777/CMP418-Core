@@ -199,11 +199,34 @@ namespace Animation
       baked = baked && skin.bake(skeleton, slots, *atlas);
     }
 
+    // Animations
+    {
+      animations.clear();
+      animations.resize(detailedAnimationData.dopeCollection.size());
+      for (UInt animID = 0; animID < animations.size(); ++animID)
+      {
+        auto& detailedSheet = detailedAnimationData.dopeCollection[animID];
+
+        auto& slotTracks = animations[animID];
+        slotTracks.resize(skeleton.getBoneCount());
+
+        detailedSheet.inspectTracks([&](Label slotName, const DopeSheet2D::DetailedTrack& detailedTrack) {
+          UInt boneHeapID = skeleton.getBoneHeapID(slotName); //TODO: is this slot or bone name???
+          if (boneHeapID == SNULL) { return; }
+
+          // Place the baked track in the same location as the bone
+          slotTracks[boneHeapID] = detailedSheet.bakeTrack(detailedTrack);
+        });
+      }
+    }
+
     return baked;
   }
 
   void SkinnedSkeleton2D::update(float dt)
   {
+    skeleton.resetPose();
+
     skeleton.forwardKinematics();
   }
 
@@ -245,6 +268,23 @@ namespace Animation
         renderer->DrawSprite(sprite, finalTransform);
       }
     }
+  }
+
+  UInt SkinnedSkeleton2D::addAnimation(Label name)
+  {
+    auto it = detailedAnimationData.dopeNames.find(name);
+    if (it == detailedAnimationData.dopeNames.end())
+    {
+      it = detailedAnimationData.dopeNames.insert({name, detailedAnimationData.dopeCollection.size()}).first;
+      detailedAnimationData.dopeCollection.emplace_back();
+    }
+
+    return it->second;
+  }
+
+  DopeSheet2D::DetailedTrack& SkinnedSkeleton2D::getAnimationTrack(UInt animID, Label slotName)
+  {
+    return detailedAnimationData.dopeCollection[animID].getTrack(slotName);
   }
 
   bool Skeleton2DSkin::bake(const Skeleton2D& skele, const Skeleton2DSlots& slotMap, const Textures::TextureAtlas& atlas)

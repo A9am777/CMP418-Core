@@ -206,6 +206,9 @@ namespace IO
     // Iterate all animations
     if (armatureRootNode.HasMember("animation") && armatureRootNode["animation"].IsArray())
     {
+      float animFPS;
+      getValue(armatureRootNode, "frameRate", animFPS, 24.0f);
+
       auto animationNodes = armatureRootNode["animation"].GetArray();
       for (auto& animationNode : animationNodes)
       {
@@ -214,7 +217,10 @@ namespace IO
 
         if (getValue(animationNode, "name", animName) && getValue(animationNode, "duration", animDuration))
         {
-          DopeSheet2D sheet;
+          UInt animID = out.addAnimation(animName);
+          auto& sheet = out.getAnimationData(animID);
+          sheet.setDuration(animDuration);
+          sheet.setRate(animFPS);
           parseBoneAnimationKeyframes(sheet, animationNode);
         }
       }

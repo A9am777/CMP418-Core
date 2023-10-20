@@ -5,6 +5,7 @@
 #include <array>
 #include <list>
 #include <map>
+#include <functional>
 #include "../Defs.h"
 
 namespace Animation
@@ -64,7 +65,8 @@ namespace Animation
 
     DopeSheet2D();
 
-    BakedTrack bakeTrack(DetailedTrack& track) const; // Bakes a track to be ready for use
+    BakedTrack bakeTrack(const DetailedTrack& track) const; // Bakes a track to be ready for use
+    void inspectTracks(const std::function<void(Label, const DetailedTrack&)>& itFunc); // Enables iteration of detailed tracks
     DetailedTrack& getTrack(Label name); // Finds or creates a track of name
     bool doesTrackExist(Label name) const;
 
@@ -75,7 +77,7 @@ namespace Animation
     inline void addScaleKeyframe(DetailedTrack& track, float duration, const gef::Vector2& scale, const TweenPoint& in = TweenPoint(), const TweenPoint& out = TweenPoint())
     { addBaseKeyframe(track, duration, { scale.x, scale.y}, AttributeScale, in, out); }
 
-    inline void setRate(float rate) { sheetRate = rate; }
+    inline void setRate(float rate) { sheetStep = 1.f/rate; }
     inline void setDuration(float duration) { sheetDuration = duration; }
 
     private:
@@ -90,6 +92,6 @@ namespace Animation
     DetailedSheet detailedSheet; // Sheet information prior to optimisation
 
     float sheetDuration;
-    float sheetRate;
+    float sheetStep;
   };
 }

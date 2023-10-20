@@ -2,12 +2,12 @@
 
 namespace Animation
 {
-  DopeSheet2D::DopeSheet2D() : sheetDuration{ .0f }, sheetRate{1.f}
+  DopeSheet2D::DopeSheet2D() : sheetDuration{ .0f }, sheetStep{1.f/60.f}
   {
 
   }
 
-  DopeSheet2D::BakedTrack DopeSheet2D::bakeTrack(DetailedTrack& track) const
+  DopeSheet2D::BakedTrack DopeSheet2D::bakeTrack(const DetailedTrack& track) const
   {
     BakedTrack out;
 
@@ -61,6 +61,14 @@ namespace Animation
     }
 
     return out;
+  }
+
+  void DopeSheet2D::inspectTracks(const std::function<void(Label, const DetailedTrack&)>& itFunc)
+  {
+    for (auto& trackIt : detailedSheet.trackNames)
+    {
+      itFunc(trackIt.first, detailedSheet.trackCollection[trackIt.second]); // Reflect the track
+    }
   }
 
   DopeSheet2D::DetailedTrack& DopeSheet2D::getTrack(Label name)
