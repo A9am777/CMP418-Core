@@ -110,7 +110,23 @@ namespace Animation
     {
       auto& thisBone = boneHeap[i];
       auto& thisParent = boneHeap[thisBone.parent];
-      thisBone.globalTransform = thisBone.localTransform * thisBone.restTransform * thisParent.globalTransform;
+
+      // TODO: BIG TEST
+      // Rotation first
+      gef::Matrix33 actualLocal = thisBone.localTransform;
+      actualLocal.SetTranslation(gef::Vector2(0, 0));
+
+      gef::Matrix33 restInter = thisBone.restTransform;
+      restInter.SetTranslation(gef::Vector2(0, 0));
+
+      actualLocal = actualLocal * restInter;
+
+      gef::Matrix33 nowTranslate = gef::Matrix33::kIdentity;
+      nowTranslate.SetTranslation(gef::Vector2(thisBone.localTransform.m[2][0] + thisBone.restTransform.m[2][0], thisBone.localTransform.m[2][1]+thisBone.restTransform.m[2][1]));
+
+      actualLocal = actualLocal * nowTranslate;
+
+      thisBone.globalTransform = actualLocal * thisParent.globalTransform;
     }
   }
 
