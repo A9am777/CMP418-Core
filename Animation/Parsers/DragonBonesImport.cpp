@@ -150,7 +150,6 @@ namespace IO
             getValue(transNode, "tweenEasing", easing);
             getValue(transNode, "x", offset.x);
             getValue(transNode, "y", offset.y);
-
             out.addTranslationKeyframe(track, duration, offset);
           }
         }

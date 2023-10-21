@@ -1,4 +1,5 @@
 #include "DopeSheet.h"
+#include "Maths.h"
 
 namespace Animation
 {
@@ -21,45 +22,42 @@ namespace Animation
         out->subTracks.emplace_back();
         auto& subProgress = out->subTracks.back();
         
-        gef::Matrix33 transformProgress = gef::Matrix33::kIdentity;
-        float rotationProgress = .0f;
         float durationProgress = .0f;
-
         for (auto& unrefinedKey : subTrack)
         {
-          transformProgress = gef::Matrix33::kIdentity;
-          rotationProgress = .0f;
-
-          durationProgress += unrefinedKey.duration;
+          // Start to build the key
+          subProgress.emplace_back();
+          auto& freshKey = subProgress.back();
+          freshKey.targetTransform = gef::Matrix33::kIdentity;
+          freshKey.angle = .0f;
+          freshKey.startTime = durationProgress;
+          freshKey.easeIn = unrefinedKey.easeIn;
+          freshKey.easeOut = unrefinedKey.easeOut;
 
           // Build and apply a transformation matrix for this key according to its type
           switch (AttributeType attribType = static_cast<AttributeType>(attributeID))
           {
             case AttributeTranslation:
             {
-              gef::Matrix33 translationMatrix = gef::Matrix33::kIdentity;
-              translationMatrix.SetTranslation(gef::Vector2(unrefinedKey.values[0], unrefinedKey.values[1]));
-              transformProgress = transformProgress * translationMatrix;
+              freshKey.targetTransform.SetTranslation(gef::Vector2(unrefinedKey.values[0], unrefinedKey.values[1]));
             }
             break;
             case AttributeRotation:
             {
-              rotationProgress += unrefinedKey.values[0]; // Note that this is lerp compliant!
+              freshKey.angle = unrefinedKey.values[0];
             }
             break;
             default: throw; // TODO: implement
           }
 
-          // Finally, build the key itself
-          subProgress.emplace_back();
-          {
-            auto& freshKey = subProgress.back();
-            freshKey.targetTransform = transformProgress;
-            freshKey.angle = rotationProgress;
-            freshKey.endTime = durationProgress;
-            freshKey.easeIn = unrefinedKey.easeIn;
-            freshKey.easeOut = unrefinedKey.easeOut;
-          }
+          durationProgress += unrefinedKey.duration;
+        }
+
+        // We cannot have just 'one' key. One key implies a rest position therefore create an additional dummy!
+        if (subProgress.size() <= 1)
+        {
+          subProgress.push_back(subProgress.back());
+          subProgress.back().startTime = durationProgress;
         }
       }
     }
@@ -111,8 +109,8 @@ namespace Animation
 
   gef::Matrix33 DopeSheet2D::BakedTrack::applyTransform(float relativeTime, const Keyframe& first, const Keyframe& next)
   {
-    float span = next.endTime - first.endTime;
-    float norm = std::max((next.endTime - relativeTime) / span, .0f);
+    float span = next.startTime - first.startTime;
+    float norm = std::min((relativeTime - first.startTime) / span, 1.f);
 
     // TODO: easing
     auto& in = first.easeIn;
@@ -126,7 +124,7 @@ namespace Animation
 
     // TODO: surely there is a better way to do this
     gef::Matrix33 rotationTransform = gef::Matrix33::kIdentity;
-    rotationTransform.Rotate(lerp(first.angle, next.angle, norm)); // Using accumulated angle therefore lerp is valid!
+    rotationTransform.Rotate(slerp(first.angle, next.angle, norm));
 
     return rotationTransform * uniformTransform;
   }
@@ -134,6 +132,20 @@ namespace Animation
   float DopeSheet2D::BakedTrack::lerp(float a, float b, float t)
   {
     return a * (1.f-t) + b * t;
+  }
+
+  float DopeSheet2D::BakedTrack::slerp(float a, float b, float t)
+  {
+    float diff = b - a;
+    float sign = copysignf(1.f, diff);
+    diff *= sign; // Strip the sign for a single comparison
+    if (diff > MATHS_PI) // Take the shortest path on the circle
+    {
+      diff -= MATHS_TAU;
+    }
+    diff *= sign; // Add the sign back!
+
+    return a + diff * t; // Lerp as normal now
   }
 
   DopePlayer2D::DopePlayer2D() : sheet{ nullptr }, time{ .0f }, scaledTime{ .0f }, playing{ false }
@@ -151,16 +163,20 @@ namespace Animation
     for (size_t subID = 0; subID < track.keyPointers.size(); ++subID)
     {
       auto& currentKeyID = track.keyPointers[subID];
+      size_t nextKeyID = currentKeyID + 1;
 
       // Key target
-      const DopeSheet2D::Keyframe* currentKey = &track.trackPtr->getKey(subID, currentKeyID);
+      const DopeSheet2D::Keyframe* nextKey = &track.trackPtr->getKey(subID, nextKeyID);
+      
       // Validate target key according to the current time
-      if (currentKey->endTime < scaledTime && currentKeyID + 1 < track.trackPtr->getKeyframeCount(subID))
+      ++nextKeyID; // Next AGAIN
+      if (nextKey->startTime < scaledTime && nextKeyID < track.trackPtr->getKeyframeCount(subID))
       {
-        currentKey = &track.trackPtr->getKey(subID, ++currentKeyID);
+        ++currentKeyID;
+        nextKey = &track.trackPtr->getKey(subID, nextKeyID);
       }
 
-      const DopeSheet2D::Keyframe* nextKey = &track.trackPtr->getKey(subID, currentKeyID + 1);
+      const DopeSheet2D::Keyframe* currentKey = &track.trackPtr->getKey(subID, currentKeyID);
 
       transform = transform * track.trackPtr->applyTransform(scaledTime, *currentKey, *nextKey);
     }

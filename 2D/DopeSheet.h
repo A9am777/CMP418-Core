@@ -17,7 +17,7 @@ namespace Animation
     {
       TweenLinear
     };
-    enum AttributeType : Byte // Global transform, translation, etc. Specifically the operation. Ordered by transform application
+    enum AttributeType : Byte // Global transform, translation, etc. Specifically the operation. Ordered by transform order
     {
       AttributeFull = 0,
       AttributeScale,
@@ -49,7 +49,7 @@ namespace Animation
     {
       gef::Matrix33 targetTransform; // Precomputed
       float angle;
-      float endTime;
+      float startTime;
       TweenPoint easeIn;
       TweenPoint easeOut;
     };
@@ -65,6 +65,7 @@ namespace Animation
 
       private:
       float lerp(float a, float b, float t);
+      float slerp(float a, float b, float t);
 
       // Different attributes can have different interpolations therefore cannot be merged into one track and must be
       // kept separate
