@@ -9,5 +9,7 @@ namespace IO
   {
     public:
     static bool parseSkeleton(Animation::Skeleton3D& out, Animation::SceneCollection& scenes, Literal path, gef::Platform& platform, bool animationOnly = false);
+    // For unnamed, single animations
+    static bool parseSkeletonAppendAnimation(Animation::Skeleton3D& out, Animation::SceneCollection& scenes, Literal path, Literal name, gef::Platform& platform);
   };
 }

@@ -52,4 +52,21 @@ namespace IO
     return out.getSkeleton() && out.getMesh();
   }
 
+  bool SceneImporter::parseSkeletonAppendAnimation(Animation::Skeleton3D& out, Animation::SceneCollection& scenes, Literal path, Literal name, gef::Platform& platform)
+  {
+    gef::Scene* scene = scenes.getScene(path);
+    if (scene == nullptr)
+    {
+      scene = new gef::Scene();
+      scene->ReadSceneFromFile(platform, path);
+      scenes.registerScene(path, scene);
+    }
+
+    if (!scene->animations.empty())
+    {
+      out.addAnimation(StringTable.Add(name), scene->animations.begin()->second);
+    }
+    return false;
+  }
+
 }

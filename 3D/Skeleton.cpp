@@ -29,14 +29,19 @@ namespace Animation
     // Animation player
     player.Init(instance->bind_pose());
 
-    player.set_clip(baseSkeleton->getAnimation(0));
-    player.set_looping(true);
-    player.set_anim_time(0.0f);
+    setAnimation(0);
   }
 
   void Skeleton3DInstance::setWorldTransform(const gef::Matrix44& transform)
   {
     instance->set_transform(transform);
+  }
+
+  void Skeleton3DInstance::setAnimation(UInt animID)
+  {
+    player.set_clip(baseSkeleton->getAnimation(animID));
+    player.set_looping(true);
+    player.set_anim_time(0.0f);
   }
 
   void Skeleton3DInstance::update(float dt)
@@ -58,6 +63,11 @@ namespace Animation
   UInt Skeleton3D::addAnimation(gef::StringId labelID, const gef::Animation* animation)
   {
     return animations.add(labelID, animation).getHeapID();
+  }
+
+  UInt Skeleton3D::getAnimationID(Label label) const
+  {
+    return animations.getID(label);
   }
 
   UInt Skeleton3D::getAnimationID(gef::StringId labelID) const

@@ -23,6 +23,7 @@ namespace Animation
     inline void setSkeleton(const gef::Skeleton* newSkeleton) { skeleton = newSkeleton; }
     inline void setMesh(const gef::Mesh* newMesh) { mesh = newMesh; }
     UInt addAnimation(gef::StringId labelID, const gef::Animation* animation);
+    UInt getAnimationID(Label label) const;
     UInt getAnimationID(gef::StringId labelID) const;
 
     inline const gef::Animation* getAnimation(UInt id) const { return animations.get(id); }
@@ -45,6 +46,8 @@ namespace Animation
 
     void setSkeleton(const Skeleton3D* newSkeleton);
     void setWorldTransform(const gef::Matrix44& transform);
+
+    void setAnimation(UInt animID);
 
     void update(float dt);
     void render(gef::Renderer3D* renderer) const;
