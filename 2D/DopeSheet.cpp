@@ -1,5 +1,4 @@
 #include "DopeSheet.h"
-#include "Maths.h"
 
 namespace Animation
 {
@@ -16,35 +15,56 @@ namespace Animation
     for (Byte attributeID = 0; attributeID < AttributeType::AttributeCount; ++attributeID)
     {
       auto& subTrack = track.attributeTracks[attributeID];
+      AttributeType attribType = static_cast<AttributeType>(attributeID);
       if (subTrack.size())
       {
         // This track is in use, start build
         out->subTracks.emplace_back();
         auto& subProgress = out->subTracks.back();
         
+        // Set attribute flags
+        switch (attribType)
+        {
+          case AttributeFull:
+            subProgress.hasRotation =
+            subProgress.hasScale =
+            subProgress.hasTranslation = true;
+          case AttributeScale:
+          case AttributeWidth:
+          case AttributeHeight:
+            subProgress.hasScale = true;
+          break;
+          case AttributeRotation:
+            subProgress.hasRotation = true;
+          break;
+          case AttributeTranslation:
+          case AttributeX:
+          case AttributeY:
+            subProgress.hasTranslation = true;
+          break;
+        }
+
         float durationProgress = .0f;
         for (auto& unrefinedKey : subTrack)
         {
           // Start to build the key
-          subProgress.emplace_back();
-          auto& freshKey = subProgress.back();
-          freshKey.targetTransform = gef::Matrix33::kIdentity;
-          freshKey.angle = .0f;
+          subProgress.keyframes.emplace_back();
+          auto& freshKey = subProgress.keyframes.back();
           freshKey.startTime = durationProgress;
           freshKey.easeIn = unrefinedKey.easeIn;
           freshKey.easeOut = unrefinedKey.easeOut;
 
           // Build and apply a transformation matrix for this key according to its type
-          switch (AttributeType attribType = static_cast<AttributeType>(attributeID))
+          switch (attribType)
           {
             case AttributeTranslation:
             {
-              freshKey.targetTransform.SetTranslation(gef::Vector2(unrefinedKey.values[0], unrefinedKey.values[1]));
+              freshKey.transform.translation = gef::Vector2(unrefinedKey.values[0], unrefinedKey.values[1]);
             }
             break;
             case AttributeRotation:
             {
-              freshKey.angle = unrefinedKey.values[0];
+              freshKey.transform.rotation = unrefinedKey.values[0];
             }
             break;
             default: throw; // TODO: implement
@@ -54,10 +74,10 @@ namespace Animation
         }
 
         // We cannot have just 'one' key. One key implies a rest position therefore create an additional dummy!
-        if (subProgress.size() <= 1)
+        if (subProgress.keyframes.size() <= 1)
         {
-          subProgress.push_back(subProgress.back());
-          subProgress.back().startTime = durationProgress;
+          subProgress.keyframes.push_back(subProgress.keyframes.back());
+          subProgress.keyframes.back().startTime = durationProgress;
         }
       }
     }
@@ -107,34 +127,35 @@ namespace Animation
     });
   }
 
-  gef::Matrix33 DopeSheet2D::BakedTrack::applyTransform(float relativeTime, const Keyframe& first, const Keyframe& next)
+  Maths::Transform2D DopeSheet2D::BakedTrack::applyTransform(float relativeTime, const Keyframe& first, const Keyframe& next, UInt subtrack)
   {
+    const SubTrack& track = subTracks[subtrack];
+
     float span = next.startTime - first.startTime;
     float norm = std::min((relativeTime - first.startTime) / span, 1.f);
 
     // TODO: easing
     auto& in = first.easeIn;
     auto& out = next.easeOut;
-
-    gef::Matrix33 uniformTransform = gef::Matrix33::kIdentity;
-    for (size_t i = 0; i < 9; ++i)
-    {
-      reinterpret_cast<float*>(uniformTransform.m)[i] = lerp(reinterpret_cast<const float*>(&first.targetTransform.m)[i], reinterpret_cast<const float*>(&next.targetTransform.m)[i], norm);
-    }
-
-    // TODO: surely there is a better way to do this
-    gef::Matrix33 rotationTransform = gef::Matrix33::kIdentity;
-    rotationTransform.Rotate(slerp(first.angle, next.angle, norm));
-
-    return rotationTransform * uniformTransform;
+    
+    Maths::Transform2D transform;
+    transform.scale = track.hasScale ? lerp(first.transform.scale, next.transform.scale, norm) : gef::Vector2::kOne;
+    transform.translation = track.hasTranslation ? lerp(first.transform.translation, next.transform.translation, norm) : gef::Vector2::kZero;
+    transform.rotation = track.hasRotation ? slerp(first.transform.rotation, next.transform.rotation, norm) : .0f;
+    return transform;
   }
 
-  float DopeSheet2D::BakedTrack::lerp(float a, float b, float t)
+  float DopeSheet2D::BakedTrack::lerp(float a, float b, float t) const
   {
     return a * (1.f-t) + b * t;
   }
 
-  float DopeSheet2D::BakedTrack::slerp(float a, float b, float t)
+  gef::Vector2 DopeSheet2D::BakedTrack::lerp(const gef::Vector2& a, const gef::Vector2& b, float t) const
+  {
+    return a * (1.f - t) + b * t;
+  }
+
+  float DopeSheet2D::BakedTrack::slerp(float a, float b, float t) const
   {
     float diff = b - a;
     float sign = copysignf(1.f, diff);
@@ -153,11 +174,15 @@ namespace Animation
 
   }
 
-  gef::Matrix33 DopePlayer2D::getCurrentTransform(size_t trackID)
+  Maths::Transform2D DopePlayer2D::getCurrentTransform(size_t trackID)
   {
     auto& track = tracks[trackID];
     
-    gef::Matrix33 transform = gef::Matrix33::kIdentity;
+    Maths::Transform2D transform;
+    transform.scale = gef::Vector2::kOne;
+    transform.rotation = .0f;
+    transform.translation = gef::Vector2::kZero;
+
     if (track.trackPtr == nullptr) { return transform; }
 
     for (size_t subID = 0; subID < track.keyPointers.size(); ++subID)
@@ -178,7 +203,7 @@ namespace Animation
 
       const DopeSheet2D::Keyframe* currentKey = &track.trackPtr->getKey(subID, currentKeyID);
 
-      transform = transform * track.trackPtr->applyTransform(scaledTime, *currentKey, *nextKey);
+      transform = transform + track.trackPtr->applyTransform(scaledTime, *currentKey, *nextKey, subID);
     }
 
     return transform;

@@ -47,12 +47,12 @@ namespace Animation
 
     // The root bone stores the transform for the entire rig!
     void setWorldTransform(const gef::Matrix33& worldMat) { boneHeap[0].globalTransform = worldMat; }
-    inline void setLocal(UInt heapID, const gef::Matrix33& localMat) { boneHeap[heapID].localTransform = localMat; }
+    inline void setLocal(UInt heapID, const Maths::Transform2D& localTransform) { boneHeap[heapID].localTransform = localTransform; }
     inline size_t getBoneCount() const { return boneHeap.size(); }
     inline bool isBaked() const { return !boneHeap.empty(); }
     inline const gef::Matrix33& getBoneTransform(UInt heapID) const { return boneHeap[heapID].globalTransform; }
     
-    gef::Matrix33& getLocalPose(UInt heapID); // Fetch the local pose of this bone so transforms can be applied
+    Maths::Transform2D& getLocalPose(UInt heapID); // Fetch the local pose of this bone so transforms can be applied
     void resetPose(); // Reset all local transforms so new ones can be applied
     void forwardKinematics(); // Compute world transforms down the skeletal structure
 
@@ -74,8 +74,8 @@ namespace Animation
     struct HeapedBone
     {
       UInt parent;
-      gef::Matrix33 restTransform;
-      gef::Matrix33 localTransform;
+      Maths::Transform2D restTransform;
+      Maths::Transform2D localTransform;
       gef::Matrix33 globalTransform;
     };
     std::vector<HeapedBone> boneHeap;

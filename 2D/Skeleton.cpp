@@ -48,8 +48,8 @@ namespace Animation
         // First, build self at the designated location
         {
           auto& heapParent = boneHeap[allocProgress];
-          parent.restPose.assignTo(heapParent.restTransform);
-          heapParent.localTransform.SetIdentity();
+          heapParent.restTransform = { parent.restPose.translation, gef::Vector2::kOne, std::abs(parent.restPose.skew.x) > std::abs(parent.restPose.skew.y) ? parent.restPose.skew.x : parent.restPose.skew.y };
+          heapParent.localTransform = { gef::Vector2::kZero, gef::Vector2::kOne, .0f };
         }
 
         // Now explore children
@@ -90,7 +90,7 @@ namespace Animation
     return desc.boneCollection[boneDescIt->second].heapID;
   }
 
-  gef::Matrix33& Skeleton2D::getLocalPose(UInt heapID)
+  Maths::Transform2D& Skeleton2D::getLocalPose(UInt heapID)
   {
     return boneHeap[heapID].localTransform;
   }
@@ -99,7 +99,9 @@ namespace Animation
   {
     for (size_t i = 1; i < boneHeap.size(); ++i)
     {
-      boneHeap[i].localTransform.SetIdentity();
+      boneHeap[i].localTransform.scale = gef::Vector2::kOne;
+      boneHeap[i].localTransform.translation = gef::Vector2::kZero;
+      boneHeap[i].localTransform.rotation = 0.f;
     }
   }
 
@@ -111,22 +113,11 @@ namespace Animation
       auto& thisBone = boneHeap[i];
       auto& thisParent = boneHeap[thisBone.parent];
 
-      // TODO: BIG TEST
-      // Rotation first
-      gef::Matrix33 actualLocal = thisBone.localTransform;
-      actualLocal.SetTranslation(gef::Vector2(0, 0));
+      gef::Matrix33 localMat;
+      Maths::Transform2D combinedTransform = thisBone.restTransform + thisBone.localTransform;
+      combinedTransform.assignTo(localMat);
 
-      gef::Matrix33 restInter = thisBone.restTransform;
-      restInter.SetTranslation(gef::Vector2(0, 0));
-
-      actualLocal = actualLocal * restInter;
-
-      gef::Matrix33 nowTranslate = gef::Matrix33::kIdentity;
-      nowTranslate.SetTranslation(gef::Vector2(thisBone.localTransform.m[2][0] + thisBone.restTransform.m[2][0], thisBone.localTransform.m[2][1]+thisBone.restTransform.m[2][1]));
-
-      actualLocal = actualLocal * nowTranslate;
-
-      thisBone.globalTransform = actualLocal * thisParent.globalTransform;
+      thisBone.globalTransform = localMat * thisParent.globalTransform;
     }
   }
 
@@ -257,7 +248,7 @@ namespace Animation
       {
         // Apply the current animation
         auto& localPose = skeleton.getLocalPose(boneHeapID);
-        localPose = localPose * animationPlayer.getCurrentTransform(boneHeapID);
+        localPose = localPose + animationPlayer.getCurrentTransform(boneHeapID);
       }
     }
 
@@ -385,7 +376,7 @@ namespace Animation
   void Skeleton2D::BonePoseOffset::assignTo(gef::Matrix33& transform) const
   {
     gef::Matrix33 rotMat = gef::Matrix33::kIdentity;
-    rotMat.Rotate(gef::DegToRad(skew.x));
+    rotMat.Rotate(std::abs(skew.x) > std::abs(skew.y) ? skew.x : skew.y);
 
     gef::Matrix33 transMat = gef::Matrix33::kIdentity;
     transMat.SetTranslation(gef::Vector2(translation.x, translation.y));

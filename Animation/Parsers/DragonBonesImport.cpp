@@ -52,6 +52,10 @@ namespace IO
     getValue(boneTransformNode, "skX", out.skew.x);
     getValue(boneTransformNode, "skY", out.skew.y);
 
+    // Convert to usable rotation system
+    out.skew.x = gef::DegToRad(out.skew.x);
+    out.skew.y = gef::DegToRad(out.skew.y);
+
     return true;
   }
 

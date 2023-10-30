@@ -6,6 +6,8 @@
 #include <list>
 #include <map>
 #include <functional>
+
+#include "Maths.h"
 #include "../Defs.h"
 
 namespace Animation
@@ -47,8 +49,7 @@ namespace Animation
     };
     struct Keyframe
     {
-      gef::Matrix33 targetTransform; // Precomputed
-      float angle;
+      Maths::Transform2D transform;
       float startTime;
       TweenPoint easeIn;
       TweenPoint easeOut;
@@ -58,18 +59,27 @@ namespace Animation
       friend DopeSheet2D;
       public:
 
-      gef::Matrix33 applyTransform(float relativeTime, const Keyframe& first, const Keyframe& next);
-      const Keyframe& getKey(size_t subtrack, size_t idx) { return subTracks[subtrack][idx]; }
+      Maths::Transform2D applyTransform(float relativeTime, const Keyframe& first, const Keyframe& next, UInt subtrack);
+      const Keyframe& getKey(size_t subtrack, size_t idx) { return subTracks[subtrack].keyframes[idx]; }
       inline size_t getAttributeTrackCount() { return subTracks.size(); }
-      inline size_t getKeyframeCount(size_t track) { return subTracks[track].size(); }
+      inline size_t getKeyframeCount(size_t track) { return subTracks[track].keyframes.size(); }
 
       private:
-      float lerp(float a, float b, float t);
-      float slerp(float a, float b, float t);
+      struct SubTrack
+      {
+        std::vector<Keyframe> keyframes;
+        bool hasRotation = false;
+        bool hasTranslation = false;
+        bool hasScale = false;
+      };
+
+      float lerp(float a, float b, float t) const;
+      gef::Vector2 lerp(const gef::Vector2& a, const gef::Vector2& b, float t) const;
+      float slerp(float a, float b, float t) const;
 
       // Different attributes can have different interpolations therefore cannot be merged into one track and must be
       // kept separate
-      std::vector<std::vector<Keyframe>> subTracks;
+      std::vector<SubTrack> subTracks;
     };
 
     DopeSheet2D();
@@ -111,7 +121,7 @@ namespace Animation
     public:
     DopePlayer2D();
 
-    gef::Matrix33 getCurrentTransform(size_t trackID);
+    Maths::Transform2D getCurrentTransform(size_t trackID);
     inline void resizeTracks(size_t trackCount) { tracks.resize(trackCount); }
     inline void setPlaying(bool playState) { playing = playState; }
     void setSheet(DopeSheet2D* context) { sheet = context; }
