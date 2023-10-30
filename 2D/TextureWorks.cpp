@@ -16,21 +16,17 @@ namespace Textures
 
   UInt TextureAtlas::addDivision(Label name, const SubTextureDesc& division)
   {
-    UInt newID = static_cast<UInt>(subDivisions.size());
-    subDivisions.push_back(division);
-    divisionNames.insert({ name, newID });
-    return newID;
+    return subDivisions.add(name, division).getHeapID();
   }
 
   UInt TextureAtlas::getDivision(Label name) const
   {
-    auto divIt = divisionNames.find(name);
-    if (divIt != divisionNames.end())
-    {
-      return divIt->second;
-    }
+    return subDivisions.getID(name);
+  }
 
-    return SNULL;
+  UInt TextureAtlas::getDivision(gef::StringId nameID) const
+  {
+    return subDivisions.getID(nameID);
   }
 
   bool Textures::TextureAtlas::bake(UInt textureID, const TextureDesc& desc)
@@ -39,7 +35,7 @@ namespace Textures
 
     // Generate space for regions
     if (regions) { delete[] regions; }
-    regions = new RegionPack[subDivisions.size()];
+    regions = new RegionPack[subDivisions.getHeapSize()];
 
     // Copy over normalised information per division
     {
@@ -48,9 +44,9 @@ namespace Textures
       float yNorm = 1 / float(desc.height);
 
       RegionPack* progress = regions;
-      for (size_t i = 0; i < subDivisions.size(); ++i)
+      for (size_t i = 0; i < subDivisions.getHeapSize(); ++i)
       {
-        auto& div = subDivisions[i];
+        auto& div = subDivisions.get(i);
 
         // UV space
         progress->uv.left = float(div.x) * xNorm;
@@ -76,40 +72,43 @@ namespace Textures
 
   TextureCollection::~TextureCollection()
   {
-    for (auto tex : textures) { delete tex; }
-    textures.clear();
+    for (size_t i = 0; i < resourceMap.getHeapSize(); ++i) 
+    {
+      delete resourceMap.get(i);
+    }
     resourceMap.clear();
   }
 
   UInt TextureCollection::add(Path path, const TextureDesc& desc)
   {
-    auto resourceIt = resourceMap.find(path);
-    if (resourceIt == resourceMap.end())
-    {
-      resourceIt = resourceMap.insert({ path, DetailedTexture{desc, static_cast<UInt>(textures.size())} }).first;
-      textures.push_back(nullptr);
-    }
-    return resourceIt->second.id;
+    auto& resourceDesc = resourceMap.add(path, nullptr);
+    resourceDesc.desc = desc;
+    return resourceDesc.getHeapID();
   }
   
-  UInt TextureCollection::getTextureDesc(Path path, TextureDesc& out)
+  UInt TextureCollection::getTextureDesc(gef::StringId path, TextureDesc*& out)
   {
-    auto resourceIt = resourceMap.find(path);
-    if (resourceIt == resourceMap.end()) { return SNULL; }
+    if (auto resourceDesc = resourceMap.getMetaInfo(path))
+    {
+      out = &resourceDesc->desc;
+      return resourceDesc->getHeapID();
+    }
 
-    out = resourceIt->second.desc;
-    return resourceIt->second.id;
+    return SNULL;
   }
 
   void TextureCollection::loadAll(gef::Platform& platform)
   {
     // Load each texture by stored path into a slot
-    for (auto& resource : resourceMap)
+    for (const auto& namedResource : resourceMap.getNameMap())
     {
-      auto& textureSlot = textures[resource.second.id];
+      auto& textureSlot = resourceMap.get(namedResource.second.getHeapID());
       if (textureSlot) { delete textureSlot; }
 
-      textureSlot = CreateTextureFromPNG(resource.first.c_str(), platform);
+      std::string path;
+      StringTable.Find(namedResource.first, path);
+      textureSlot = CreateTextureFromPNG(path.c_str(), platform);
     }
+    baked = true;
   }
 }

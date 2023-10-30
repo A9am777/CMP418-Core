@@ -2,7 +2,4 @@
 
 #include <system/string_id.h>
 
-namespace Animation
-{
-  static gef::StringIdTable StringTable;
-}
+static gef::StringIdTable StringTable;
