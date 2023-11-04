@@ -48,6 +48,7 @@ namespace Animation
     void setWorldTransform(const gef::Matrix44& transform);
 
     void setAnimation(UInt animID);
+    void setAnimationBlend(UInt animID, float time = 0.f);
 
     void update(float dt);
     void render(gef::Renderer3D* renderer) const;
@@ -55,6 +56,11 @@ namespace Animation
     private:
     const Skeleton3D* baseSkeleton;
     gef::SkinnedMeshInstance* instance;
+    gef::SkeletonPose pose;
     MotionClipPlayer player;
+    MotionClipPlayer oldPlayer;
+    float blendValue = 0;
+    float blendTime = 0.f;
+    float blendTotalTime = 0.f;
   };
 }

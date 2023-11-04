@@ -1,4 +1,5 @@
 #include "3D/Skeleton.h"
+#include <algorithm>
 
 namespace Animation
 {
@@ -28,6 +29,9 @@ namespace Animation
 
     // Animation player
     player.Init(instance->bind_pose());
+    oldPlayer = player;
+
+    pose = instance->bind_pose();
 
     setAnimation(0);
   }
@@ -44,10 +48,27 @@ namespace Animation
     player.set_anim_time(0.0f);
   }
 
+  void Skeleton3DInstance::setAnimationBlend(UInt animID, float time)
+  {
+    oldPlayer = player;
+
+    setAnimation(animID);
+
+    blendTime = 0.f;
+    blendTotalTime = time;
+  }
+
   void Skeleton3DInstance::update(float dt)
   {
+    oldPlayer.Update(dt, instance->bind_pose());
     player.Update(dt, instance->bind_pose());
-    instance->UpdateBoneMatrices(player.pose());
+
+    blendTime += dt;
+    blendValue = std::max(std::min(blendTime / blendTotalTime, 1.f), .0f);
+
+    pose.Linear2PoseBlend(oldPlayer.pose(), player.pose(), blendValue);
+
+    instance->UpdateBoneMatrices(pose);
   }
 
   void Skeleton3DInstance::render(gef::Renderer3D* renderer) const
