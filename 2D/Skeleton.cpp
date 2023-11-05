@@ -19,18 +19,7 @@ namespace Animation
   Skeleton2D::DetailedBone& Skeleton2D::addBone(Label name)
   {
     auto& desc = *detailedDescriptor;
-
-    // Return the previous instance of the bone (if it exists)
-    auto it = desc.names.find(name);
-    if(it != desc.names.end())
-    {
-      return desc.boneCollection[it->second];
-    }
-
-    // Register the new bone, at the back of the collection
-    it = desc.names.insert({ name, static_cast<UInt>(desc.boneCollection.size()) }).first;
-    desc.boneCollection.emplace_back();
-    return desc.boneCollection.back();
+    return desc.boneCollection.add(name).first;
   }
 
   bool Skeleton2D::bake()
@@ -41,25 +30,25 @@ namespace Animation
     auto& desc = *detailedDescriptor;
     // Traverse tree by depth, ensuring bones are packed sequentially
     {
-      boneHeap.resize(desc.boneCollection.size()); // May overallocate where bone data is bad, this is not an issue
+      boneList.resize(desc.boneCollection.getHeapSize()); // May overallocate where bone data is bad, this is not an issue
       // The recursive step
       std::function<void(DetailedBone&, UInt&)> nodeTraversal = [&](DetailedBone& parent, UInt& allocProgress)
       {
         // First, build self at the designated location
         {
-          auto& heapParent = boneHeap[allocProgress];
-          heapParent.restTransform = { parent.restPose.translation, gef::Vector2::kOne, std::abs(parent.restPose.skew.x) > std::abs(parent.restPose.skew.y) ? parent.restPose.skew.x : parent.restPose.skew.y };
-          heapParent.localTransform = { gef::Vector2::kZero, gef::Vector2::kOne, .0f };
+          auto& flatParent = boneList[allocProgress];
+          flatParent.restTransform = { parent.restPose.translation, gef::Vector2::kOne, std::abs(parent.restPose.skew.x) > std::abs(parent.restPose.skew.y) ? parent.restPose.skew.x : parent.restPose.skew.y };
+          flatParent.localTransform = { gef::Vector2::kZero, gef::Vector2::kOne, .0f };
         }
 
         // Now explore children
         for(auto& childID : parent.children)
         {
-          auto& childBone = desc.boneCollection[childID];
-          childBone.heapID = ++allocProgress;
+          auto& childBone = desc.boneCollection.get(childID);
+          childBone.flattenedID = ++allocProgress;
 
-          auto& heapBone = boneHeap[allocProgress];
-          heapBone.parent = parent.heapID;
+          auto& flatBone = boneList[allocProgress];
+          flatBone.parent = parent.flattenedID;
 
           nodeTraversal(childBone, allocProgress);
         }
@@ -67,51 +56,51 @@ namespace Animation
       };
 
       // Start from the root and build the flattened skeletal structure
-      auto& rootBone = desc.boneCollection[desc.root];
-      rootBone.heapID = 0;
+      auto& rootBone = desc.boneCollection.get(desc.root);
+      rootBone.flattenedID = 0;
       UInt progress = 0;
       nodeTraversal(rootBone, progress);
 
       // Set the global transform to identity
-      boneHeap[0].globalTransform.SetIdentity();
+      boneList[0].globalTransform.SetIdentity();
     }
 
     return isBaked();
   }
 
-  UInt Skeleton2D::getBoneHeapID(Label name) const
+  UInt Skeleton2D::getBoneFlatID(gef::StringId nameID) const
   {
     if (!isBaked()) { return SNULL; }
     
     auto& desc = *detailedDescriptor;
-    auto boneDescIt = desc.names.find(name);
-    if (boneDescIt == desc.names.end()) { return SNULL; }
+    auto boneID = desc.boneCollection.getID(nameID);
     
-    return desc.boneCollection[boneDescIt->second].heapID;
+    return boneID == SNULL ? SNULL : desc.boneCollection.get(boneID).flattenedID;
   }
 
-  Maths::Transform2D& Skeleton2D::getLocalPose(UInt heapID)
+  Maths::Transform2D& Skeleton2D::getLocalPose(UInt flatID)
   {
-    return boneHeap[heapID].localTransform;
+    return boneList[flatID].localTransform;
   }
 
   void Skeleton2D::resetPose()
   {
-    for (size_t i = 1; i < boneHeap.size(); ++i)
+    for (size_t i = 1; i < boneList.size(); ++i)
     {
-      boneHeap[i].localTransform.scale = gef::Vector2::kOne;
-      boneHeap[i].localTransform.translation = gef::Vector2::kZero;
-      boneHeap[i].localTransform.rotation = 0.f;
+      auto& bone = boneList[i];
+      bone.localTransform.scale = gef::Vector2::kOne;
+      bone.localTransform.translation = gef::Vector2::kZero;
+      bone.localTransform.rotation = 0.f;
     }
   }
 
   void Skeleton2D::forwardKinematics()
   {
     // Start after the root and traverse the tree linearly
-    for (size_t i = 1; i < boneHeap.size(); ++i)
+    for (size_t i = 1; i < boneList.size(); ++i)
     {
-      auto& thisBone = boneHeap[i];
-      auto& thisParent = boneHeap[thisBone.parent];
+      auto& thisBone = boneList[i];
+      auto& thisParent = boneList[thisBone.parent];
 
       gef::Matrix33 localMat;
       Maths::Transform2D combinedTransform = thisBone.restTransform + thisBone.localTransform;
@@ -126,9 +115,9 @@ namespace Animation
     auto& desc = *detailedDescriptor;
 
     // Clean previous attempts and search for the root
-    for (size_t id = 0; id < desc.boneCollection.size(); ++id)
+    for (size_t id = 0; id < desc.boneCollection.getHeapSize(); ++id)
     {
-      auto& bone = desc.boneCollection[id];
+      auto& bone = desc.boneCollection.get(id);
 
       bone.children.clear();
       if(bone.parentName.empty()) // Assume root has no parent
@@ -138,15 +127,15 @@ namespace Animation
     }
 
     // Link children to their parent
-    for (size_t childID = 0; childID < desc.boneCollection.size(); ++childID)
+    for (size_t childID = 0; childID < desc.boneCollection.getHeapSize(); ++childID)
     {
-      auto& childBone = desc.boneCollection[childID];
+      auto& childBone = desc.boneCollection.get(childID);
 
-      auto parentIt = desc.names.find(childBone.parentName);
-      if (parentIt != desc.names.end())
+      UInt parentHeapID = desc.boneCollection.getID(childBone.parentName);
+      if(parentHeapID != SNULL)
       {
-        auto& parentBone = desc.boneCollection[parentIt->second];
-        parentBone.children.push_back(static_cast<UInt>(childID));
+        desc.boneCollection.get(parentHeapID)
+          .children.push_back(childID);
       }
     }
   }
@@ -156,12 +145,14 @@ namespace Animation
     // Build a lookup from the draw order to optimised bone order
     {
       bakedDrawOrder.resize(skele.getBoneCount());
-      for (auto& slot : slotMap)
+      for (UInt slotID = 0; slotID < slotMap.getHeapSize(); ++slotID)
       {
+        auto& slotInfo = slotMap.get(slotID);
+
         // Search for the heap bone
-        UInt boneHeapID = skele.getBoneHeapID(slot.second.boneName);
+        UInt boneFlatID = skele.getBoneFlatID(slotInfo.boneNameID);
         // Use the root bone on failure as a precaution as it typically isn't visible
-        bakedDrawOrder[slot.second.priority] = (boneHeapID == SNULL) ? 0 : boneHeapID;
+        bakedDrawOrder[slotInfo.priority] = (boneFlatID == SNULL) ? 0 : boneFlatID;
       }
     }
 
@@ -170,25 +161,21 @@ namespace Animation
 
   void Skeleton2DSlots::addSlot(Label boneName, Label skinHook)
   {
-    auto slotIt = slotMap.find(skinHook);
-    if (slotIt == slotMap.end())
-    {
-      slotMap.insert({ skinHook, 
-        {boneName, static_cast<UInt>(slotMap.size())}
-      });
-    }
+    slotMap.add(skinHook, { StringTable.Add(boneName), static_cast<UInt>(slotMap.getHeapSize())});
   }
 
-  std::string Skeleton2DSlots::getSlotBone(Label slotName) const
+  gef::StringId Skeleton2DSlots::getSlotBone(gef::StringId slotNameID) const
   {
-    auto slotIt = slotMap.find(slotName);
-    if (slotIt == slotMap.end()) { return ""; }
-    return slotIt->second.boneName;
+    if (auto indexer = slotMap.getMetaInfo(slotNameID))
+    {
+      return slotMap.get(indexer->getHeapID()).boneNameID;
+    }
+    return NULL;
   }
 
   SkinnedSkeleton2D::SkinnedSkeleton2D()
   {
-    currentSkin = 0;
+    currentSkin = currentAnimation = 0;
     atlas = nullptr;
     baked = false;
   }
@@ -214,16 +201,16 @@ namespace Animation
     // Animations
     {
       wipeBakedAnimations();
-      animations.resize(detailedAnimationData.dopeCollection.size());
+      animations.resize(detailedAnimationData.getHeapSize());
       for (UInt animID = 0; animID < animations.size(); ++animID)
       {
-        auto& detailedSheet = detailedAnimationData.dopeCollection[animID];
+        auto& detailedSheet = detailedAnimationData.get(animID);
 
         auto& slotTracks = animations[animID];
         slotTracks.resize(skeleton.getBoneCount(), nullptr);
 
-        detailedSheet.inspectTracks([&](Label slotName, const DopeSheet2D::DetailedTrack& detailedTrack) {
-          UInt boneHeapID = skeleton.getBoneHeapID(slotName); //TODO: is this the slot or bone name???
+        detailedSheet.inspectTracks([&](gef::StringId slotNameID, const DopeSheet2D::DetailedTrack& detailedTrack) {
+          UInt boneHeapID = skeleton.getBoneFlatID(slots.getSlotBone(slotNameID));
           if (boneHeapID == SNULL) { return; }
 
           // Place the baked track in the same location as the bone
@@ -297,14 +284,7 @@ namespace Animation
 
   UInt SkinnedSkeleton2D::addAnimation(Label name)
   {
-    auto it = detailedAnimationData.dopeNames.find(name);
-    if (it == detailedAnimationData.dopeNames.end())
-    {
-      it = detailedAnimationData.dopeNames.insert({name, detailedAnimationData.dopeCollection.size()}).first;
-      detailedAnimationData.dopeCollection.emplace_back();
-    }
-
-    return it->second;
+    return detailedAnimationData.add(name).second;
   }
 
   void SkinnedSkeleton2D::setAnimation(UInt animID)
@@ -313,7 +293,7 @@ namespace Animation
     if (isBaked())
     {
       // Copy animation data over to the player
-      animationPlayer.setSheet(&detailedAnimationData.dopeCollection[animID]);
+      animationPlayer.setSheet(&detailedAnimationData.get(animID));
       animationPlayer.resizeTracks(skeleton.getBoneCount());
       auto& bakedTracks = animations[animID];
       for (size_t trackID = 0; trackID < bakedTracks.size(); ++trackID)
@@ -328,7 +308,7 @@ namespace Animation
 
   DopeSheet2D::DetailedTrack& SkinnedSkeleton2D::getAnimationTrack(UInt animID, Label slotName)
   {
-    return detailedAnimationData.dopeCollection[animID].getTrack(slotName);
+    return detailedAnimationData.get(animID).getTrack(slotName);
   }
 
   void SkinnedSkeleton2D::wipeBakedAnimations()
@@ -352,12 +332,12 @@ namespace Animation
     bakedSubtextureLinks.resize(skele.getBoneCount());
     for (auto& slot : slots)
     {
-      std::string boneName = slotMap.getSlotBone(slot.first);
-      UInt boneHeapID = skele.getBoneHeapID(boneName);
-      if (boneHeapID == SNULL) { continue; }
+      gef::StringId boneNameID = slotMap.getSlotBone(slot.first);
+      UInt boneFlatID = skele.getBoneFlatID(boneNameID);
+      if (boneFlatID == SNULL) { continue; }
 
       // Build the offset transform
-      auto& bakedLink = bakedSubtextureLinks[boneHeapID];
+      auto& bakedLink = bakedSubtextureLinks[boneFlatID];
       slot.second.offset.assignTo(bakedLink.offsetTransform);
       
       // Assign the atlas ID
@@ -370,7 +350,7 @@ namespace Animation
 
   void Skeleton2DSkin::addLink(Label slotName, Label subTextureName, const Skeleton2D::BonePoseOffset& offset)
   {
-    slots.insert({ slotName, {subTextureName, offset} });
+    slots.insert({ StringTable.Add(slotName), {StringTable.Add(subTextureName), offset} });
   }
 
   void Skeleton2D::BonePoseOffset::assignTo(gef::Matrix33& transform) const

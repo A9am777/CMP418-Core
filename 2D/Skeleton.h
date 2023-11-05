@@ -32,7 +32,7 @@ namespace Animation
       BonePoseOffset restPose;
 
       // Managed
-      UInt heapID;
+      UInt flattenedID;
       std::list<UInt> children;
     };
 
@@ -42,17 +42,17 @@ namespace Animation
     // Slow
     DetailedBone& addBone(Label name);
     bool bake(); // Build an optimised representation of the skeleton
-    UInt getBoneHeapID(Label name) const;
+    UInt getBoneFlatID(gef::StringId nameID) const;
     //
 
     // The root bone stores the transform for the entire rig!
-    void setWorldTransform(const gef::Matrix33& worldMat) { boneHeap[0].globalTransform = worldMat; }
-    inline void setLocal(UInt heapID, const Maths::Transform2D& localTransform) { boneHeap[heapID].localTransform = localTransform; }
-    inline size_t getBoneCount() const { return boneHeap.size(); }
-    inline bool isBaked() const { return !boneHeap.empty(); }
-    inline const gef::Matrix33& getBoneTransform(UInt heapID) const { return boneHeap[heapID].globalTransform; }
+    void setWorldTransform(const gef::Matrix33& worldMat) { boneList[0].globalTransform = worldMat; }
+    inline void setLocal(UInt flatID, const Maths::Transform2D& localTransform) { boneList[flatID].localTransform = localTransform; }
+    inline size_t getBoneCount() const { return boneList.size(); }
+    inline bool isBaked() const { return !boneList.empty(); }
+    inline const gef::Matrix33& getBoneTransform(UInt flatID) const { return boneList[flatID].globalTransform; }
     
-    Maths::Transform2D& getLocalPose(UInt heapID); // Fetch the local pose of this bone so transforms can be applied
+    Maths::Transform2D& getLocalPose(UInt flatID); // Fetch the local pose of this bone so transforms can be applied
     void resetPose(); // Reset all local transforms so new ones can be applied
     void forwardKinematics(); // Compute world transforms down the skeletal structure
 
@@ -62,8 +62,7 @@ namespace Animation
     // COLD MEMORY //
     struct ColdDesc
     {
-      std::vector<DetailedBone> boneCollection; // Collection of unoptimised bone information (by ID)
-      std::map<std::string, UInt> names; // Exposes bone name to its ID
+      NamedHeap<DetailedBone> boneCollection;
       UInt root; // The ID of the presumed root bone
     };
     ColdDesc* detailedDescriptor; // 
@@ -71,14 +70,14 @@ namespace Animation
 
     // HOT MEMORY //
     // Bone traversal is optimised via a depth-first flattening of the skeleton tree
-    struct HeapedBone
+    struct FlatBone
     {
       UInt parent;
       Maths::Transform2D restTransform;
       Maths::Transform2D localTransform;
       gef::Matrix33 globalTransform;
     };
-    std::vector<HeapedBone> boneHeap;
+    std::vector<FlatBone> boneList;
     //
   };
 
@@ -90,7 +89,7 @@ namespace Animation
     bool bake(const Skeleton2D& skele);
 
     void addSlot(Label boneName, Label skinHook);
-    std::string getSlotBone(Label slotName) const;
+    gef::StringId getSlotBone(gef::StringId slotNameID) const;
 
     inline bool isBaked() const { return !bakedDrawOrder.empty(); }
     inline UInt getBoneID(UInt idxDraw) const { return bakedDrawOrder[idxDraw]; }
@@ -98,11 +97,11 @@ namespace Animation
     private:
     struct DetailedSlotInfo
     {
-      std::string boneName;
+      gef::StringId boneNameID;
       UInt priority; // Draw order
     };
-    std::map<std::string, DetailedSlotInfo> slotMap; // Slot name to info
-    std::vector<UInt> bakedDrawOrder; // Draw order to bone heap (lookup)
+    NamedHeap<DetailedSlotInfo> slotMap; // Slot name to info
+    std::vector<UInt> bakedDrawOrder; // Draw order to bone list (lookup)
   };
 
   // Assigns a transform and subtexture to each bone part
@@ -116,13 +115,13 @@ namespace Animation
     void addLink(Label slotName, Label subTextureName, const Skeleton2D::BonePoseOffset& offset);
 
     inline bool isBaked() const { return !bakedSubtextureLinks.empty(); }
-    inline UInt getSubtextureID(UInt boneHeapID) const { return bakedSubtextureLinks[boneHeapID].subtextureID; }
-    inline const gef::Matrix33& getTransform(UInt boneHeapID) const { return bakedSubtextureLinks[boneHeapID].offsetTransform; }
+    inline UInt getSubtextureID(UInt boneFlatID) const { return bakedSubtextureLinks[boneFlatID].subtextureID; }
+    inline const gef::Matrix33& getTransform(UInt boneFlatID) const { return bakedSubtextureLinks[boneFlatID].offsetTransform; }
 
     private:
     struct DetailedSkinPart
     {
-      std::string subName; // The name of the designated subtexture part
+      gef::StringId subName; // The name of the designated subtexture part
       Skeleton2D::BonePoseOffset offset;
     };
     struct SkinPart
@@ -131,8 +130,8 @@ namespace Animation
       UInt subtextureID;
     };
 
-    std::map<std::string, DetailedSkinPart> slots; // Slot to transform mapped to skin data
-    std::vector<SkinPart> bakedSubtextureLinks; // Bone heap to its subtexture and transform
+    std::unordered_map<gef::StringId, DetailedSkinPart> slots; // Slot to transform mapped to skin data
+    std::vector<SkinPart> bakedSubtextureLinks; // Bone list to its subtexture and transform
   };
 
   // Full ensemble
@@ -150,7 +149,7 @@ namespace Animation
     UInt addAnimation(Label name);
     void setAnimation(UInt anim);
     void setPlay(bool animationPlay) { animationPlayer.setPlaying(animationPlay); }
-    inline DopeSheet2D& getAnimationData(UInt animID) { return detailedAnimationData.dopeCollection[animID]; }
+    inline DopeSheet2D& getAnimationData(UInt animID) { return detailedAnimationData.get(animID); }
     DopeSheet2D::DetailedTrack& getAnimationTrack(UInt animID, Label slotName);
 
     inline UInt addSkin() { skins.emplace_back(); return static_cast<UInt>(skins.size() - 1); }
@@ -161,12 +160,6 @@ namespace Animation
     inline bool isBaked() const { return baked; }
 
     private:
-    struct DetailedAnimations
-    {
-      std::map<std::string, UInt> dopeNames;
-      std::vector<DopeSheet2D> dopeCollection;
-    };
-
     void wipeBakedAnimations();
 
     Skeleton2DSlots slots;
@@ -176,7 +169,7 @@ namespace Animation
     Textures::TextureAtlas* atlas;
     Skeleton2D skeleton;
 
-    DetailedAnimations detailedAnimationData;
+    NamedHeap<DopeSheet2D> detailedAnimationData;
     std::vector<std::vector<DopeSheet2D::BakedTrack*>> animations;
     DopePlayer2D animationPlayer;
     UInt currentAnimation;

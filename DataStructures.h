@@ -29,11 +29,11 @@ template<typename Data, typename Indexer = NamedHeapInfo> class NamedHeap
   void clear();
 
   Indexer& add(gef::StringId nameHash, const Data& item);
-  Data& add(gef::StringId nameHash);
+  std::pair<Data&, UInt> add(gef::StringId nameHash);
 
   // Where possible use StringId counterparts
   Indexer& add(Label name, const Data& item);
-  Data& add(Label name);
+  std::pair<Data&, UInt> add(Label name);
   Indexer* getMetaInfo(Label name);
   const Indexer* getMetaInfo(Label name) const;
   UInt getID(Label name) const;
@@ -77,7 +77,7 @@ inline Indexer& NamedHeap<Data, Indexer>::add(gef::StringId nameHash, const Data
 }
   
 template<typename Data, typename Indexer>
-inline Data& NamedHeap<Data, Indexer>::add(gef::StringId nameHash)
+inline std::pair<Data&, UInt> NamedHeap<Data, Indexer>::add(gef::StringId nameHash)
 {
   auto metaIt = this->metaMap.find(nameHash);
   if (metaIt == this->metaMap.end())
@@ -90,7 +90,7 @@ inline Data& NamedHeap<Data, Indexer>::add(gef::StringId nameHash)
     heapedData.emplace_back();
   }
 
-  return heapedData[metaIt->second.getHeapID()];
+  return { heapedData[metaIt->second.getHeapID()], metaIt->second.getHeapID() };
 }
 template<typename Data, typename Indexer>
 inline Indexer& NamedHeap<Data, Indexer>::add(Label name, const Data& item)
@@ -98,7 +98,7 @@ inline Indexer& NamedHeap<Data, Indexer>::add(Label name, const Data& item)
   return this->add(StringTable.Add(name), item);
 }
 template<typename Data, typename Indexer>
-inline Data& NamedHeap<Data, Indexer>::add(Label name)
+inline std::pair<Data&, UInt> NamedHeap<Data, Indexer>::add(Label name)
 {
   return this->add(StringTable.Add(name));
 }
@@ -126,7 +126,8 @@ inline Indexer* NamedHeap<Data, Indexer>::getMetaInfo(gef::StringId nameHash)
 template<typename Data, typename Indexer>
 inline const Indexer* NamedHeap<Data, Indexer>::getMetaInfo(gef::StringId nameHash) const
 {
-  return getMetaInfo(nameHash);
+  auto& metaIt = this->metaMap.find(nameHash);
+  return metaIt == this->metaMap.end() ? nullptr : &metaIt->second;
 }
 template<typename Data, typename Indexer>
 inline UInt NamedHeap<Data, Indexer>::getID(gef::StringId nameHash) const

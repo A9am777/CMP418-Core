@@ -8,6 +8,7 @@
 #include <functional>
 
 #include "Maths.h"
+#include "DataStructures.h"
 #include "../Defs.h"
 
 namespace Animation
@@ -85,7 +86,7 @@ namespace Animation
     DopeSheet2D();
 
     BakedTrack* bakeTrack(const DetailedTrack& track) const; // Bakes a track to be ready for use
-    void inspectTracks(const std::function<void(Label, const DetailedTrack&)>& itFunc); // Enables iteration of detailed tracks
+    void inspectTracks(const std::function<void(gef::StringId, const DetailedTrack&)>& itFunc); // Enables iteration of detailed tracks
     DetailedTrack& getTrack(Label name); // Finds or creates a track of name
     bool doesTrackExist(Label name) const;
 
@@ -102,15 +103,9 @@ namespace Animation
     inline float getDuration() const { return sheetDuration; }
 
     private:
-    struct DetailedSheet
-    {
-      std::map<std::string, UInt> trackNames; // Name to allocation
-      std::vector<DetailedTrack> trackCollection; // Raw per-object track
-    };
-
     void addBaseKeyframe(DetailedTrack& track, float duration, const std::initializer_list<float>& params, AttributeType keyType, const TweenPoint& in, const TweenPoint& out);
 
-    DetailedSheet detailedSheet; // Sheet information prior to optimisation
+    NamedHeap<DetailedTrack> detailedSheet; // Sheet information prior to optimisation
 
     float sheetDuration;
     float sheetRate;

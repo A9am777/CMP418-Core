@@ -91,31 +91,22 @@ namespace Animation
     return out;
   }
 
-  void DopeSheet2D::inspectTracks(const std::function<void(Label, const DetailedTrack&)>& itFunc)
+  void DopeSheet2D::inspectTracks(const std::function<void(gef::StringId, const DetailedTrack&)>& itFunc)
   {
-    for (auto& trackIt : detailedSheet.trackNames)
+    for (auto& trackIt : detailedSheet.getNameMap())
     {
-      itFunc(trackIt.first, detailedSheet.trackCollection[trackIt.second]); // Reflect the track
+      itFunc(trackIt.first, detailedSheet.get(trackIt.second.getHeapID())); // Reflect the track
     }
   }
 
   DopeSheet2D::DetailedTrack& DopeSheet2D::getTrack(Label name)
   {
-    auto it = detailedSheet.trackNames.find(name);
-    if (it == detailedSheet.trackNames.end())
-    {
-      // Create new
-      it = detailedSheet.trackNames.insert({ name,static_cast<UInt>(detailedSheet.trackCollection.size()) }).first;
-      detailedSheet.trackCollection.emplace_back();
-    }
-
     // Be careful that this is temporary
-    return detailedSheet.trackCollection[it->second];
+    return detailedSheet.add(name).first;
   }
   bool DopeSheet2D::doesTrackExist(Label name) const
   {
-    auto it = detailedSheet.trackNames.find(name);
-    return it != detailedSheet.trackNames.end();
+    return detailedSheet.getMetaInfo(name);
   }
   void DopeSheet2D::addBaseKeyframe(DetailedTrack& track, float duration, const std::initializer_list<float>& params, AttributeType keyType, const TweenPoint& in, const TweenPoint& out)
   {
