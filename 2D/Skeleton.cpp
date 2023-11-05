@@ -341,8 +341,8 @@ namespace Animation
       slot.second.offset.assignTo(bakedLink.offsetTransform);
       
       // Assign the atlas ID
-      UInt atlasDivisionID = atlas.getDivision(slot.second.subName);
-      bakedLink.subtextureID = atlasDivisionID == SNULL ? 0 : atlasDivisionID;
+      UInt atlasRegionID = atlas.getRegionID(atlas.getDivision(slot.second.subName));
+      bakedLink.subtextureID = atlasRegionID == SNULL ? 0 : atlasRegionID;
     }
 
     return isBaked();

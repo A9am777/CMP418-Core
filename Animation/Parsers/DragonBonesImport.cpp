@@ -183,7 +183,6 @@ namespace IO
 
   bool DragonBonesImporter::parseSkinnedSkeleton(Animation::SkinnedSkeleton2D& out, const rapidjson::Document& json)
   {
-    // TODO: why is armature an array
     if (!json.HasMember("armature") || !json["armature"].IsArray()) { return false; }
 
     // Fetch the root armature
@@ -233,7 +232,7 @@ namespace IO
     return true;
   }
 
-  bool DragonBonesImporter::parseAnimationAtlas(Textures::TextureCollection& collection, Textures::TextureAtlas& out, const rapidjson::Document& json)
+  bool DragonBonesImporter::parseAnimationAtlas(Textures::TextureCollection& collection, Textures::TextureAtlas& out, const rapidjson::Document& json, bool prebake)
   {
     using namespace Textures;
 
@@ -247,6 +246,7 @@ namespace IO
 
       textureID = collection.add(imagePath, desc);
     }
+    out.setTexture(textureID, desc);
 
     // Fetch all subtextures
     if(json.HasMember("SubTexture"))
@@ -270,6 +270,65 @@ namespace IO
       }
     }
 
-    return out.bake(textureID, desc);
+    return prebake ? out.bake() : true;
+  }
+
+  bool DragonBonesImporter::parseSpriteAnimation(Animation::SpriteSheet& out, const rapidjson::Document& json)
+  {
+    // This is a bit of a hack, however we can expect each animation under its own 'armature',
+    // with the frame order equal to the slot order. Technically incorrect, however straight to the point
+
+    if (!json.HasMember("armature") || !json["armature"].IsArray()) { return false; }
+
+    // Fetch the root armature
+    auto armaturesNode = json["armature"].GetArray();
+    for (auto& armatureNode : armaturesNode)
+    {
+      float animFPS;
+      getValue(armatureNode, "frameRate", animFPS, 24.0f);
+
+      std::string animationName;
+      std::vector<gef::StringId> subtextureSequence;
+
+      // Get past dud skin
+      if (armatureNode.HasMember("skin") && armatureNode["skin"].IsArray())
+      {
+        auto skinNode = armatureNode["skin"].GetArray()[0].GetObject();
+        // Get past dud slot
+        if (skinNode.HasMember("slot") && skinNode["slot"].IsArray())
+        {
+          auto slotNode = skinNode["slot"].GetArray()[0].GetObject();
+
+          // Finally reach the display list of subtextures
+          if (slotNode.HasMember("display") && slotNode["display"].IsArray())
+          {
+            auto displaysNode = slotNode["display"].GetArray();
+            for (auto& displayNode : displaysNode)
+            {
+              std::string subtextureName;
+              if (getValue(displayNode, "name", subtextureName))
+              {
+                subtextureSequence.push_back(StringTable.Add(subtextureName));
+              }
+            }
+          }
+        }
+      }
+
+      // Get past dud animation
+      if (armatureNode.HasMember("animation") && armatureNode["animation"].IsArray())
+      {
+        auto animationNode = armatureNode["animation"].GetArray()[0].GetObject();
+        getValue(animationNode, "name", animationName);
+      }
+
+      // Finally, record the animation
+      if (!subtextureSequence.empty() && !animationName.empty())
+      {
+        out.addAnimation(animationName, subtextureSequence, animFPS);
+      }
+    }
+
+    return out.bake();
   }
 }

@@ -41,9 +41,8 @@ namespace Textures
     inline bool isBaked() const { return baked; }
 
     private:
-    class DetailedTexture : public NamedHeapInfo
+    struct DetailedTexture : public NamedHeapInfo
     {
-      public:
       TextureDesc desc;
     };
 
@@ -65,20 +64,32 @@ namespace Textures
     ~TextureAtlas();
 
     // SLOW //
-    bool bake(UInt textureID, const TextureDesc& desc); // Generates parametrised data
+    bool bake(const bool isSwizzled = false); // Generates parametrised data, optionally to a prescribed "regionID"
     UInt addDivision(Label name, const SubTextureDesc& division);
     UInt getDivision(Label name) const;
     UInt getDivision(gef::StringId nameID) const;
     //
     
+    void setTexture(UInt textureID, const TextureDesc& desc);
+
+    // This can be used to ascribe a more cache friendly ordering before baking!
+    inline void setRegionID(UInt divID, UInt regionID) { subDivisions.get(divID).regionID = regionID; }
+
+    inline UInt getRegionID(UInt divID) const { return divID >= subDivisions.getHeapSize() ? SNULL : subDivisions.get(divID).regionID; }
     inline bool isBaked() const { return regions != nullptr; }
     inline size_t getCount() const { return static_cast<UInt>(subDivisions.getHeapSize()); }
-    inline const UInt getTextureID() const { return tex; }
+    inline UInt getTextureID() const { return tex; }
     inline const RegionPack* getData(UInt id) const { return regions + id; }
     private:
-    NamedHeap<SubTextureDesc> subDivisions; // Maps sub division by name to ID
+    struct DetailedDivision
+    {
+      UInt regionID; // Used for sorting regions externally
+      SubTextureDesc subDesc;
+    };
+
+    NamedHeap<DetailedDivision> subDivisions; // Maps sub division by name to ID
+    TextureDesc texDesc;
     UInt tex; // Texture slot
     RegionPack* regions; // Baked position information
   };
-
 }

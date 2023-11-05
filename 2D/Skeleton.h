@@ -26,12 +26,15 @@ namespace Animation
     // Expensive bone information to offload
     struct DetailedBone
     {
+      friend Skeleton2D;
+
       // Raw information
       std::string parentName;
       UInt length;
       BonePoseOffset restPose;
 
       // Managed
+      private:
       UInt flattenedID;
       std::list<UInt> children;
     };

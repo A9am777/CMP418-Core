@@ -16,7 +16,7 @@ namespace Textures
 
   UInt TextureAtlas::addDivision(Label name, const SubTextureDesc& division)
   {
-    return subDivisions.add(name, division).getHeapID();
+    return subDivisions.add(name, { 0, division }).getHeapID();
   }
 
   UInt TextureAtlas::getDivision(Label name) const
@@ -29,10 +29,14 @@ namespace Textures
     return subDivisions.getID(nameID);
   }
 
-  bool Textures::TextureAtlas::bake(UInt textureID, const TextureDesc& desc)
+  void TextureAtlas::setTexture(UInt textureID, const TextureDesc& desc)
   {
     tex = textureID;
+    texDesc = desc;
+  }
 
+  bool Textures::TextureAtlas::bake(const bool isSwizzled)
+  {
     // Generate space for regions
     if (regions) { delete[] regions; }
     regions = new RegionPack[subDivisions.getHeapSize()];
@@ -40,31 +44,38 @@ namespace Textures
     // Copy over normalised information per division
     {
       // Pre-compute axes
-      float xNorm = 1 / float(desc.width);
-      float yNorm = 1 / float(desc.height);
+      float xNorm = 1 / float(texDesc.width);
+      float yNorm = 1 / float(texDesc.height);
 
-      RegionPack* progress = regions;
       for (size_t i = 0; i < subDivisions.getHeapSize(); ++i)
       {
-        auto& div = subDivisions.get(i);
+        auto& detailedDiv = subDivisions.get(i);
+        auto& subDiv = detailedDiv.subDesc;
+
+        if (!isSwizzled)
+        {
+          // Use the division order when lacking a preset order
+          detailedDiv.regionID = i;
+        }
+
+        RegionPack* progress = regions + detailedDiv.regionID;
 
         // UV space
-        progress->uv.left = float(div.x) * xNorm;
-        progress->uv.bottom = float(div.y) * yNorm;
-        progress->uv.right = progress->uv.left + float(div.width) * xNorm;
-        progress->uv.top = progress->uv.bottom + float(div.height) * yNorm;
+        progress->uv.left = float(subDiv.x) * xNorm;
+        progress->uv.bottom = float(subDiv.y) * yNorm;
+        progress->uv.right = progress->uv.left + float(subDiv.width) * xNorm;
+        progress->uv.top = progress->uv.bottom + float(subDiv.height) * yNorm;
         
         // Sub sprite transform
         {
           gef::Matrix33 scaleMat = gef::Matrix33::kIdentity;
-          scaleMat.Scale(gef::Vector2(float(div.width), float(div.height)));
+          scaleMat.Scale(gef::Vector2(float(subDiv.width), float(subDiv.height)));
 
           gef::Matrix33 translationMat = gef::Matrix33::kIdentity;
-          translationMat.SetTranslation(gef::Vector2(float(div.width) * 0.5f - float(div.displayWidth) * 0.5f - float(div.displayX), float(div.height) * 0.5f - float(div.displayHeight) * 0.5f - float(div.displayY)));
+          translationMat.SetTranslation(gef::Vector2(float(subDiv.width) * 0.5f - float(subDiv.displayWidth) * 0.5f - float(subDiv.displayX), float(subDiv.height) * 0.5f - float(subDiv.displayHeight) * 0.5f - float(subDiv.displayY)));
 
           progress->transform = scaleMat * translationMat;
         }
-        ++progress;
       }
     }
     return isBaked();
