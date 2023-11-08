@@ -21,7 +21,15 @@ namespace BlendTree
     // Getters
     BoolGetterNode::registerClass();
     FloatGetterNode::registerClass();
+    IntGetterNode::registerClass();
+    StringGetterNode::registerClass();
     AnimationGetterNode::registerClass();
+
+    // Setters
+    BoolSetterNode::registerClass();
+    FloatSetterNode::registerClass();
+    IntSetterNode::registerClass();
+    StringSetterNode::registerClass();
 
     // Blend nodes
     AnimationNode::registerClass();

@@ -1,7 +1,6 @@
 #include "Animation/BlendTree/BlendNode.h"
 
 #define IMGUI_DEFINE_MATH_OPERATORS
-#include <application.h>
 #include <ax/Widgets.h>
 #include <ax/builders.h>
 
@@ -34,7 +33,7 @@ namespace BlendTree
 
   void BlendNode::renderLinks()
   {
-    UInt inputPinId = imguiPinStart + classDescriptor->outputBlueprint.size();
+    UInt inputPinId = getImGuiInputStartID();
 
     for (size_t inputIdx = 0; inputIdx < classDescriptor->inputBlueprint.size(); ++inputIdx)
     {
