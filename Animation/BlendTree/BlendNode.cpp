@@ -19,15 +19,13 @@ namespace BlendTree
   {
     UInt pinId = imguiPinStart;
 
-    ImGui::SameLine();
-
     for (auto& outputPin : classDescriptor->outputBlueprint)
     {
       ImColor pinColour = getImguiTypeColour(outputPin.type);
 
       ne::BeginPin(pinId, ne::PinKind::Output);
       ImGui::Text(outputPin.name.c_str());
-      ax::Widgets::Icon(ImVec2(static_cast<float>(24), static_cast<float>(24)), ax::Drawing::IconType::Circle, true);
+      ax::Widgets::Icon(ImVec2(static_cast<float>(24), static_cast<float>(24)), ax::Drawing::IconType::Circle, true, pinColour);
       ne::EndPin();
 
       ++pinId;

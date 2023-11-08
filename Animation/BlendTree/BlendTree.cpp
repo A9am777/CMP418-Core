@@ -40,7 +40,6 @@ namespace BlendTree
   void BlendTree::renderGraph()
   {
     if (!imguiNodeContext) { return; }
-
     ne::SetCurrentEditor(imguiNodeContext);
     ne::Begin("My Humble Test Editor");
 
