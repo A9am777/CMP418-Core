@@ -3,7 +3,7 @@
 #include <maths/matrix44.h>
 #include <functional>
 
-#include "Skeleton.h"
+#include "Skeleton2D.h"
 
 namespace Animation
 {

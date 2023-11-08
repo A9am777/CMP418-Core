@@ -1,7 +1,7 @@
 #pragma once
 #include "Animation/Parsers/Parser.h"
 #include "3D/SceneCollection.h"
-#include "3D/Skeleton.h"
+#include "3D/Skeleton3D.h"
 
 namespace IO
 {

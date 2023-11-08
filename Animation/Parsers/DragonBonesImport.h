@@ -4,7 +4,7 @@
 
 #include "Animation/Parsers/Parser.h"
 #include "2D/TextureWorks.h"
-#include "2D/Skeleton.h"
+#include "2D/Skeleton2D.h"
 #include "2D/DopeSheet.h"
 #include "Animation/SpriteWorks.h"
 

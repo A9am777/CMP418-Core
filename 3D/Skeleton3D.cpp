@@ -1,4 +1,4 @@
-#include "3D/Skeleton.h"
+#include "3D/Skeleton3D.h"
 
 namespace Animation
 {
