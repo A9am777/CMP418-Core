@@ -23,6 +23,10 @@ namespace BlendTree
     BlendNodePtr findNode(Label name);
     BlendNodePtr findNode(gef::StringId nameID);
 
+    // Removes the node from the tree, destroying if the reference is not used
+    BlendNodePtr removeNode(Label name);
+    BlendNodePtr removeNode(gef::StringId nameID);
+
     private:
     // Converts from node unique ID to the start of pin unique IDs for a node
     UInt imguiToPinStart(UInt pinMajor) {

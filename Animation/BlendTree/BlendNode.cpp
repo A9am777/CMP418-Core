@@ -80,20 +80,20 @@ namespace BlendTree
   void BlendNode::renderStandardHeader(ne::Utilities::BlueprintNodeBuilder& builder)
   {
     builder.Header();
-      ImGui::Text(getClassName().c_str());
-      ImGui::Text(getName().c_str());
+      ImGui::Text((getClassName() + " \"" + getName() + "\"").c_str());
     builder.EndHeader();
   }
 
   void BlendNode::renderStandardInputPins(ne::Utilities::BlueprintNodeBuilder& builder)
   {
     UInt inputPinId = getImGuiInputStartID();
-    for (auto& inputPin : classDescriptor->inputBlueprint)
+    for (size_t inputPinIdx = 0; inputPinIdx < classDescriptor->inputBlueprint.size(); ++inputPinIdx)
     {
+      auto& inputPin = classDescriptor->inputBlueprint[inputPinIdx];
       ImColor pinColour = getImguiTypeColour(inputPin.type);
 
       builder.Input(inputPinId);
-      ax::Widgets::Icon(ImVec2(static_cast<float>(16), static_cast<float>(16)), ax::Drawing::IconType::Circle, true, pinColour);
+      ax::Widgets::Icon(ImVec2(static_cast<float>(16), static_cast<float>(16)), ax::Drawing::IconType::Circle, !inputs[inputPinIdx].parentNode.expired(), pinColour);
 
       ImGui::TextUnformatted(inputPin.name.c_str());
       ImGui::Spring(0);

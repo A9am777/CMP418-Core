@@ -40,7 +40,9 @@ namespace BlendTree
 
     builder.Begin(imguiPinStart);
     renderStandardHeader(builder);
+    ImGui::PushItemWidth(50.0f);
     ImGui::DragFloat("(Float)", &nodeValue);
+    ImGui::PopItemWidth();
     builder.Middle();
     renderStandardOutputPins(builder);
     builder.End();
@@ -52,7 +54,9 @@ namespace BlendTree
 
     builder.Begin(imguiPinStart);
     renderStandardHeader(builder);
+    ImGui::PushItemWidth(50.0f);
     ImGui::DragInt("(Int)", &nodeValue);
+    ImGui::PopItemWidth();
     builder.Middle();
     renderStandardOutputPins(builder);
     builder.End();
@@ -64,7 +68,9 @@ namespace BlendTree
 
     builder.Begin(imguiPinStart);
     renderStandardHeader(builder);
+    ImGui::PushItemWidth(150.0f);
     ImGui::InputText("(String)", &nodeValue);
+    ImGui::PopItemWidth();
     builder.Middle();
     renderStandardOutputPins(builder);
     builder.End();

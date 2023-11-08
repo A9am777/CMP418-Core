@@ -106,4 +106,22 @@ namespace BlendTree
     auto& it = nodeMap.find(nameID);
     return it == nodeMap.end() ? BlendNodePtr() : it->second;
   }
+
+  BlendNodePtr BlendTree::removeNode(Label name)
+  {
+    return removeNode(StringTable.Add(name));;
+  }
+
+  BlendNodePtr BlendTree::removeNode(gef::StringId nameID)
+  {
+    auto& it = nodeMap.find(nameID);
+    if (it != nodeMap.end())
+    {
+      BlendNodePtr caughtNode = it->second;
+      nodeMap.erase(it);
+      return caughtNode;
+    }
+
+    return BlendNodePtr();
+  }
 }
