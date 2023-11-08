@@ -1,5 +1,10 @@
 #include "Animation/BlendTree/BlendNode.h"
 
+#define IMGUI_DEFINE_MATH_OPERATORS
+#include <application.h>
+#include <ax/Widgets.h>
+#include <ax/builders.h>
+
 namespace BlendTree
 {
   NodeClassMeta BlendNode::baseClassDescriptor;
@@ -17,21 +22,17 @@ namespace BlendTree
 
   void BlendNode::render()
   {
-    UInt pinId = imguiPinStart;
+    UInt inputPinId = imguiPinStart + classDescriptor->outputBlueprint.size();
+    UInt outputPinId = imguiPinStart;
 
-    for (auto& outputPin : classDescriptor->outputBlueprint)
-    {
-      ImColor pinColour = getImguiTypeColour(outputPin.type);
+    ne::Utilities::BlueprintNodeBuilder builder;
 
-      ne::BeginPin(pinId, ne::PinKind::Output);
-      ImGui::Text(outputPin.name.c_str());
-      ax::Widgets::Icon(ImVec2(static_cast<float>(24), static_cast<float>(24)), ax::Drawing::IconType::Circle, true, pinColour);
-      ne::EndPin();
+    builder.Begin(imguiPinStart);
 
-      ++pinId;
-    }
-
-    ImGui::SameLine();
+    builder.Header();
+      ImGui::Text(getClassName().c_str());
+      ImGui::Text(getName().c_str());
+    builder.EndHeader();
 
     for (size_t inputIdx = 0; inputIdx < classDescriptor->inputBlueprint.size(); ++inputIdx)
     {
@@ -39,22 +40,56 @@ namespace BlendTree
 
       ImColor pinColour = getImguiTypeColour(inputPin.type);
 
-      ne::BeginPin(pinId, ne::PinKind::Input);
-      ImGui::Text(inputPin.name.c_str());
-      ax::Widgets::Icon(ImVec2(static_cast<float>(24), static_cast<float>(24)), ax::Drawing::IconType::Circle, true, pinColour);
-      ne::EndPin();
+      builder.Input(inputPinId);
+        ax::Widgets::Icon(ImVec2(static_cast<float>(16), static_cast<float>(16)), ax::Drawing::IconType::Circle, true, pinColour);
+      
+        ImGui::TextUnformatted(inputPin.name.c_str());
+        ImGui::Spring(0);
+      builder.EndInput();
 
+      ++inputPinId;
+    }
+    
+    builder.Middle();
+
+    for (auto& outputPin : classDescriptor->outputBlueprint)
+    {
+      ImColor pinColour = getImguiTypeColour(outputPin.type);
+
+      builder.Output(outputPinId);
+      ImGui::TextUnformatted(outputPin.name.c_str());
+      ImGui::Spring(0);
+
+        ax::Widgets::Icon(ImVec2(static_cast<float>(16), static_cast<float>(16)), ax::Drawing::IconType::Circle, true, pinColour);
+
+        
+      builder.EndOutput();
+
+      ++outputPinId;
+    }
+
+    builder.End();
+  }
+
+  void BlendNode::renderLinks()
+  {
+    UInt inputPinId = imguiPinStart + classDescriptor->outputBlueprint.size();
+
+    for (size_t inputIdx = 0; inputIdx < classDescriptor->inputBlueprint.size(); ++inputIdx)
+    {
+      auto& inputPin = classDescriptor->inputBlueprint[inputIdx];
+
+      ImColor pinColour = getImguiTypeColour(inputPin.type);
       if (auto connection = inputs[inputIdx].parentNode.lock())
       {
         // Inputs are 1:1 unlike outputs 1:M therefore use the link ID as the input ID
 
         UInt parentPinId = connection->imguiPinStart + inputs[inputIdx].slot;
-        ne::Link(pinId, parentPinId, pinId, pinColour, 2.0f);
+        ne::Link(inputPinId, parentPinId, inputPinId, pinColour, imguiLinkThickness);
       }
 
-      ++pinId;
+      ++inputPinId;
     }
-
   }
 
   bool BlendNode::canLink(BlendNodePtr& parent, UInt outIdx, BlendNodePtr& child, UInt inIdx)

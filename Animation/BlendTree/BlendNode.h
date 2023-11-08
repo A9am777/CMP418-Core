@@ -7,7 +7,8 @@
 #include "Defs.h"
 
 #include <imgui_node_editor.h>
-#include <ax/Widgets.h>
+#include <imgui_internal.h>
+
 
 // ImGui node editor namespace
 namespace ne = ax::NodeEditor;
@@ -55,6 +56,7 @@ namespace BlendTree
     };
 
     virtual void render();
+    void renderLinks(); // This is required due to silly ImGui reasons
 
     // Returns if two nodes can safely be linked
     static bool canLink(BlendNodePtr& parent, UInt outIdx, BlendNodePtr& child, UInt inIdx);
@@ -87,6 +89,8 @@ namespace BlendTree
 
     UInt imguiPinStart; // ID used for managing pins. Starts with outputs before inputs for nicer lookup
     std::vector<void*> outputs; // Can be freely managed by the underlying derived class
+
+    static constexpr float imguiLinkThickness = 2.f;
 
     private:
     static NodeClassMeta baseClassDescriptor; // The default node class params

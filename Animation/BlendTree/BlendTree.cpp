@@ -4,7 +4,7 @@
 
 namespace BlendTree
 {
-  BlendTree::BlendTree() : imguiNodeContext{ nullptr }, imguiNextPinMajor{0}
+  BlendTree::BlendTree() : imguiNodeContext{ nullptr }, imguiNextPinMajor{1}
   {
 
   }
@@ -45,18 +45,23 @@ namespace BlendTree
 
     for (auto& node : nodeMap)
     {
-      ne::BeginNode(node.first);
+      //ne::BeginNode(node.first);
 
-      ImGui::BeginHorizontal("hori");
-      ImGui::Spring(1);
-      ImGui::Text(node.second->getClassName().c_str());
-      ImGui::Text(node.second->getName().c_str());
-      ImGui::Spring(1);
-      ImGui::EndHorizontal();
+      //ImGui::BeginHorizontal("hori");
+      //ImGui::Spring(1);
+      //ImGui::Text(node.second->getClassName().c_str());
+      //ImGui::Text(node.second->getName().c_str());
+      //ImGui::Spring(1);
+      //ImGui::EndHorizontal();
 
       node.second->render();
 
-      ne::EndNode();
+      //ne::EndNode();
+    }
+
+    for (auto& node : nodeMap)
+    {
+      node.second->renderLinks();
     }
 
     ne::End();
