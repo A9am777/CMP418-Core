@@ -9,6 +9,14 @@
 #include <imgui_node_editor.h>
 #include <imgui_internal.h>
 
+// ImGui node editor forward declarations
+namespace ax {
+  namespace NodeEditor {
+    namespace Utilities {
+      struct BlueprintNodeBuilder;
+    }
+  }
+}
 
 // ImGui node editor namespace
 namespace ne = ax::NodeEditor;
@@ -20,6 +28,8 @@ namespace BlendTree
   {
     Param_Bool = 0,
     Param_Float,
+    Param_Int,
+    Param_String,
     Param_Animation,
     Param_Pose,
     Param_COUNT
@@ -65,9 +75,6 @@ namespace BlendTree
     // Quickly links two nodes
     static void unsafeLink(BlendNodePtr& parent, UInt outIdx, BlendNodePtr& child, UInt inIdx);
 
-    // Returns an ImGui colour for a parameter type
-    static ImColor getImguiTypeColour(ParamType type);
-
     inline void setImguiPinStart(UInt newStart) { imguiPinStart = newStart; }
 
     inline const std::string& getName() const { return nodeName; }
@@ -87,14 +94,27 @@ namespace BlendTree
       return nodeInput ? nodeInput->getOutput<T>(inputs[idx].slot) : nullptr; // Return its data if it exists
     }
 
+    // ImGui
+    void renderStandardHeader(ne::Utilities::BlueprintNodeBuilder& builder);
+    void renderStandardInputPins(ne::Utilities::BlueprintNodeBuilder& builder);
+    void renderStandardOutputPins(ne::Utilities::BlueprintNodeBuilder& builder);
+    // Returns an ImGui colour for a parameter type
+    static ImColor getImguiTypeColour(ParamType type);
+    //
+
     UInt imguiPinStart; // ID used for managing pins. Starts with outputs before inputs for nicer lookup
     std::vector<void*> outputs; // Can be freely managed by the underlying derived class
-
-    static constexpr float imguiLinkThickness = 2.f;
 
     private:
     static NodeClassMeta baseClassDescriptor; // The default node class params
     const NodeClassMeta* classDescriptor; // Describes the static node implementation by the underlying class. Technically a dynamic node class can implement this
+
+    // ImGui
+    static constexpr float imguiLinkThickness = 2.f;
+
+    UInt getImGuiInputStartID() const { return imguiPinStart + classDescriptor->outputBlueprint.size(); }
+    UInt getImGuiOutputStartID() const { return imguiPinStart; }
+    //
 
     std::string nodeName;
     std::vector<InputSource> inputs; // Constrained by alive parents

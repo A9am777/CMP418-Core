@@ -22,52 +22,13 @@ namespace BlendTree
 
   void BlendNode::render()
   {
-    UInt inputPinId = imguiPinStart + classDescriptor->outputBlueprint.size();
-    UInt outputPinId = imguiPinStart;
-
     ne::Utilities::BlueprintNodeBuilder builder;
 
     builder.Begin(imguiPinStart);
-
-    builder.Header();
-      ImGui::Text(getClassName().c_str());
-      ImGui::Text(getName().c_str());
-    builder.EndHeader();
-
-    for (size_t inputIdx = 0; inputIdx < classDescriptor->inputBlueprint.size(); ++inputIdx)
-    {
-      auto& inputPin = classDescriptor->inputBlueprint[inputIdx];
-
-      ImColor pinColour = getImguiTypeColour(inputPin.type);
-
-      builder.Input(inputPinId);
-        ax::Widgets::Icon(ImVec2(static_cast<float>(16), static_cast<float>(16)), ax::Drawing::IconType::Circle, true, pinColour);
-      
-        ImGui::TextUnformatted(inputPin.name.c_str());
-        ImGui::Spring(0);
-      builder.EndInput();
-
-      ++inputPinId;
-    }
-    
+    renderStandardHeader(builder);
+    renderStandardInputPins(builder);
     builder.Middle();
-
-    for (auto& outputPin : classDescriptor->outputBlueprint)
-    {
-      ImColor pinColour = getImguiTypeColour(outputPin.type);
-
-      builder.Output(outputPinId);
-      ImGui::TextUnformatted(outputPin.name.c_str());
-      ImGui::Spring(0);
-
-        ax::Widgets::Icon(ImVec2(static_cast<float>(16), static_cast<float>(16)), ax::Drawing::IconType::Circle, true, pinColour);
-
-        
-      builder.EndOutput();
-
-      ++outputPinId;
-    }
-
+    renderStandardOutputPins(builder);
     builder.End();
   }
 
@@ -117,6 +78,50 @@ namespace BlendTree
     inputSlot.slot = outIdx;
   }
 
+  void BlendNode::renderStandardHeader(ne::Utilities::BlueprintNodeBuilder& builder)
+  {
+    builder.Header();
+      ImGui::Text(getClassName().c_str());
+      ImGui::Text(getName().c_str());
+    builder.EndHeader();
+  }
+
+  void BlendNode::renderStandardInputPins(ne::Utilities::BlueprintNodeBuilder& builder)
+  {
+    UInt inputPinId = getImGuiInputStartID();
+    for (auto& inputPin : classDescriptor->inputBlueprint)
+    {
+      ImColor pinColour = getImguiTypeColour(inputPin.type);
+
+      builder.Input(inputPinId);
+      ax::Widgets::Icon(ImVec2(static_cast<float>(16), static_cast<float>(16)), ax::Drawing::IconType::Circle, true, pinColour);
+
+      ImGui::TextUnformatted(inputPin.name.c_str());
+      ImGui::Spring(0);
+      builder.EndInput();
+
+      ++inputPinId;
+    }
+  }
+
+  void BlendNode::renderStandardOutputPins(ne::Utilities::BlueprintNodeBuilder& builder)
+  {
+    UInt outputPinId = getImGuiOutputStartID();
+    for (auto& outputPin : classDescriptor->outputBlueprint)
+    {
+      ImColor pinColour = getImguiTypeColour(outputPin.type);
+
+      builder.Output(outputPinId);
+        ImGui::TextUnformatted(outputPin.name.c_str());
+        ImGui::Spring(0);
+
+        ax::Widgets::Icon(ImVec2(static_cast<float>(16), static_cast<float>(16)), ax::Drawing::IconType::Circle, true, pinColour);
+      builder.EndOutput();
+
+      ++outputPinId;
+    }
+  }
+
   ImColor BlendNode::getImguiTypeColour(ParamType type)
   {
     Byte colourIndex = static_cast<Byte>(type);
@@ -126,8 +131,8 @@ namespace BlendTree
     ImColor(0xFF635380),
     ImColor(0xFFF4A259),
     ImColor(0xFFBC4B51),
-    //ImColor(0x5B8E7D),
-    //ImColor(0x102E4A),
+    ImColor(0xFF5B8E7D),
+    ImColor(0xFF102E4A)
     //ImColor(0x5887FF),
     //ImColor(0xE0B1CB)
     };
