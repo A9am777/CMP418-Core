@@ -17,3 +17,9 @@ typedef unsigned int UInt;
 static constexpr UInt SNULL = ~0; // Signed null in unsigned type
 
 static constexpr Literal fsp = "/"; // Path seperator
+
+// Bitwise operations
+#define BIT(n) (1 << n)
+template<typename T> T BitMask(const T state, const T mask) { return static_cast<T>(state & mask); }
+template<typename T> T BitSet(const T state, const T mask) { return static_cast<T>(state | mask); }
+template<typename T> T BitClear(const T state, const T mask) { return static_cast<T>(state & ~mask); }

@@ -23,6 +23,8 @@ namespace ne = ax::NodeEditor;
 
 namespace BlendTree
 {
+  class BlendTree; // Forward declaration
+
   // Type protection of passed variables in the tree
   enum ParamType : Byte
   {
@@ -57,6 +59,7 @@ namespace BlendTree
   {
     public:
     BlendNode(Label name, const NodeClassMeta* descriptor = &BlendNode::baseClassDescriptor);
+    virtual ~BlendNode() = default;
 
     static void registerClass() // Define your class descriptor here
     {
@@ -65,8 +68,13 @@ namespace BlendTree
       baseClassDescriptor.outputBlueprint = {};
     };
 
+    // Called by a tree when this node has been linked to it
+    void acceptTree(BlendTree* tree);
+
+    void update(BlendTree* tree, float dt);
     virtual void render();
-    void renderLinks(); // This is required due to silly ImGui reasons
+    // This is required due to silly ImGui reasons. There is no reason for child classes to implement this
+    void renderLinks();
 
     // Returns if two nodes can safely be linked
     static bool canLink(BlendNodePtr& parent, UInt outIdx, BlendNodePtr& child, UInt inIdx);
@@ -94,6 +102,9 @@ namespace BlendTree
       return nodeInput ? nodeInput->getOutput<T>(inputs[idx].slot) : nullptr; // Return its data if it exists
     }
 
+    // Derived classes can implement this to process any updates - knowing all input nodes have already been visited
+    virtual void process(float dt) {}
+
     // ImGui
     void renderStandardHeader(ne::Utilities::BlueprintNodeBuilder& builder);
     void renderStandardInputPins(ne::Utilities::BlueprintNodeBuilder& builder);
@@ -109,6 +120,15 @@ namespace BlendTree
     static NodeClassMeta baseClassDescriptor; // The default node class params
     const NodeClassMeta* classDescriptor; // Describes the static node implementation by the underlying class. Technically a dynamic node class can implement this
 
+
+    enum NodeFlags : UInt
+    {
+      // Used to track if this node has been visited and refreshed. Flip flops each frame to avoid multiple traversals
+      NodeUpdateParityFlag = BIT(0),
+
+      NodeInitMask = NodeUpdateParityFlag
+    };
+
     // ImGui
     static constexpr float imguiLinkThickness = 2.f;
 
@@ -118,6 +138,7 @@ namespace BlendTree
 
     std::string nodeName;
     std::vector<InputSource> inputs; // Constrained by alive parents
+    NodeFlags nodeFlags;
 
     template<typename T> T* getOutput(UInt idx)
     {

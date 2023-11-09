@@ -33,8 +33,8 @@ namespace BlendTree
     DeclareGetterNode(Animation, Param_Animation, gef::Animation)
     #undef DeclareGetterNode
 
-    // Define a macro for automatically building setter classes (with their own underlying storage)
-    #define DeclareSetterNode(Typename, ParamType, RealType) \
+  // Define a macro for automatically building setter classes (with their own underlying storage)
+  #define DeclareSetterNode(Typename, ParamType, RealType) \
   class Typename##SetterNode : public BlendNode\
   {\
     public:\

@@ -14,6 +14,10 @@ namespace BlendTree
 
     static void registerAllNodes(); // Registers the classes of all nodes
 
+    BlendNodePtr setOutputNode(BlendNode* node);
+
+    void updateNodes(float dt);
+
     void startRenderContext(Path configFile);
     void renderGraph();
     void endRenderContext();
@@ -27,6 +31,8 @@ namespace BlendTree
     BlendNodePtr removeNode(Label name);
     BlendNodePtr removeNode(gef::StringId nameID);
 
+    inline bool getUpdateParity() const { return updateParity; }
+
     private:
     // Converts from node unique ID to the start of pin unique IDs for a node
     UInt imguiToPinStart(UInt pinMajor) {
@@ -36,6 +42,10 @@ namespace BlendTree
     ne::EditorContext* imguiNodeContext;
     UInt imguiNextPinMajor; // Unique id required for ImGui nodes
 
+    void addNodeInternal(BlendNodePtr freshNodePtr);
+
     std::unordered_map<gef::StringId, BlendNodePtr> nodeMap; // Collection of all kept nodes
+    BlendNodePtr outputNode;
+    bool updateParity; // Distinguishes between odd and even frames so nodes can automatically identify if they have been visited without multiple passes
   };
 }

@@ -1,4 +1,5 @@
 #include "Animation/BlendTree/BlendNode.h"
+#include "Animation/BlendTree/BlendTree.h"
 
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include <ax/Widgets.h>
@@ -8,7 +9,7 @@ namespace BlendTree
 {
   NodeClassMeta BlendNode::baseClassDescriptor;
 
-  BlendNode::BlendNode(Label name, const NodeClassMeta* descriptor)
+  BlendNode::BlendNode(Label name, const NodeClassMeta* descriptor) : nodeFlags{ NodeInitMask }
   {
     nodeName = name;
 
@@ -17,6 +18,36 @@ namespace BlendTree
       inputs.resize(classDescriptor->inputBlueprint.size());
       outputs.resize(classDescriptor->outputBlueprint.size(), nullptr);
     }
+  }
+
+  void BlendNode::acceptTree(BlendTree* tree)
+  {
+    // Copy over the update parity to be ready for next frame
+    nodeFlags = tree->getUpdateParity() ? BitSet(nodeFlags, NodeUpdateParityFlag) : BitClear(nodeFlags, NodeUpdateParityFlag);
+  }
+
+  void BlendNode::update(BlendTree* tree, float dt)
+  {
+    // Work is not required if already visited
+    if (BitMask(nodeFlags, NodeUpdateParityFlag) == tree->getUpdateParity()) { return; }
+
+    // Set my update parity now (avoids accidental recursion)
+    nodeFlags = tree->getUpdateParity() ? BitSet(nodeFlags, NodeUpdateParityFlag) : BitClear(nodeFlags, NodeUpdateParityFlag);
+
+    for (auto& parent : inputs)
+    {
+      // Per real node input
+      if (auto parentPtr = parent.parentNode.lock())
+      {
+        // Recursively update parent inputs
+        parentPtr->update(tree, dt);
+      }
+    }
+
+    // TODO: idea to cache the order of visited nodes for faster traversal next frame
+
+    // All parent inputs are current, can now update properly
+    process(dt);
   }
 
   void BlendNode::render()

@@ -4,7 +4,7 @@
 
 namespace BlendTree
 {
-  BlendTree::BlendTree() : imguiNodeContext{ nullptr }, imguiNextPinMajor{1}
+  BlendTree::BlendTree() : imguiNodeContext{ nullptr }, imguiNextPinMajor{ 1 }, updateParity{ false }
   {
 
   }
@@ -34,6 +34,21 @@ namespace BlendTree
     // Blend nodes
     AnimationNode::registerClass();
     ClipNode::registerClass();
+  }
+
+  BlendNodePtr BlendTree::setOutputNode(BlendNode* node)
+  {
+    outputNode = BlendNodePtr(node);
+    addNodeInternal(outputNode);
+    return outputNode;
+  }
+
+  void BlendTree::updateNodes(float dt)
+  {
+    // Flip flop the frame parity
+    updateParity = !updateParity;
+
+    outputNode->update(this, dt);
   }
 
   void BlendTree::startRenderContext(Path configFile)
@@ -91,8 +106,7 @@ namespace BlendTree
       StringTable.Add(node->getName()), nodePtr
     });
 
-    nodePtr->setImguiPinStart(imguiToPinStart(imguiNextPinMajor));
-    ++imguiNextPinMajor;
+    addNodeInternal(nodePtr);
     return nodePtr;
   }
 
@@ -123,5 +137,13 @@ namespace BlendTree
     }
 
     return BlendNodePtr();
+  }
+
+  void BlendTree::addNodeInternal(BlendNodePtr freshNodePtr)
+  {
+    freshNodePtr->acceptTree(this);
+
+    freshNodePtr->setImguiPinStart(imguiToPinStart(imguiNextPinMajor));
+    ++imguiNextPinMajor;
   }
 }
