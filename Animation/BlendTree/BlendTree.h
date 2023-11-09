@@ -42,8 +42,6 @@ namespace BlendTree
     ne::EditorContext* imguiNodeContext;
     UInt imguiNextPinMajor; // Unique id required for ImGui nodes
 
-    void addNodeInternal(BlendNodePtr freshNodePtr);
-
     std::unordered_map<gef::StringId, BlendNodePtr> nodeMap; // Collection of all kept nodes
     BlendNodePtr outputNode;
     bool updateParity; // Distinguishes between odd and even frames so nodes can automatically identify if they have been visited without multiple passes

@@ -34,13 +34,14 @@ namespace BlendTree
     // Blend nodes
     AnimationNode::registerClass();
     ClipNode::registerClass();
+
+    // Output
+    SkeletonOutputNode::registerClass();
   }
 
   BlendNodePtr BlendTree::setOutputNode(BlendNode* node)
   {
-    outputNode = BlendNodePtr(node);
-    addNodeInternal(outputNode);
-    return outputNode;
+    return outputNode = addNode(node);
   }
 
   void BlendTree::updateNodes(float dt)
@@ -106,7 +107,10 @@ namespace BlendTree
       StringTable.Add(node->getName()), nodePtr
     });
 
-    addNodeInternal(nodePtr);
+    nodePtr->acceptTree(this);
+
+    nodePtr->setImguiPinStart(imguiToPinStart(imguiNextPinMajor));
+    ++imguiNextPinMajor;
     return nodePtr;
   }
 
@@ -137,13 +141,5 @@ namespace BlendTree
     }
 
     return BlendNodePtr();
-  }
-
-  void BlendTree::addNodeInternal(BlendNodePtr freshNodePtr)
-  {
-    freshNodePtr->acceptTree(this);
-
-    freshNodePtr->setImguiPinStart(imguiToPinStart(imguiNextPinMajor));
-    ++imguiNextPinMajor;
   }
 }
