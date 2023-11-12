@@ -71,7 +71,9 @@ namespace BlendTree
     // Called by a tree when this node has been linked to it
     void acceptTree(BlendTree* tree);
 
-    void update(BlendTree* tree, float dt);
+    // Traverse the tree, updating depth first
+    void update(BlendTree* tree, BlendNodePtr& context, float dt);
+
     virtual void render();
     // This is required due to silly ImGui reasons. There is no reason for child classes to implement this
     void renderLinks();
@@ -84,10 +86,15 @@ namespace BlendTree
     static void unsafeLink(BlendNodePtr& parent, UInt outIdx, BlendNodePtr& child, UInt inIdx);
 
     inline void setImguiPinStart(UInt newStart) { imguiPinStart = newStart; }
+    inline UInt getImguiPinStart() const { return imguiPinStart; }
+    inline bool isImguiInputPin(UInt id) { return id >= getImguiInputStartID(); }
+    inline UInt imguiPinToIdx(bool isInput, UInt id) { return isInput ? id - getImguiInputStartID() : id - getImguiOutputStartID(); }
 
     inline const std::string& getName() const { return nodeName; }
     inline const std::string& getClassName() const { return classDescriptor->className; }
     inline UInt getConnectionCount() const { return static_cast<UInt>(classDescriptor->inputBlueprint.size() + classDescriptor->outputBlueprint.size()); }
+    inline UInt getInputCount() const { return static_cast<UInt>(classDescriptor->inputBlueprint.size()); }
+    inline UInt getOutputCount() const { return static_cast<UInt>(classDescriptor->outputBlueprint.size()); }
 
     protected:
     struct InputSource
@@ -120,21 +127,27 @@ namespace BlendTree
     static NodeClassMeta baseClassDescriptor; // The default node class params
     const NodeClassMeta* classDescriptor; // Describes the static node implementation by the underlying class. Technically a dynamic node class can implement this
 
-
     enum NodeFlags : UInt
     {
       // Used to track if this node has been visited and refreshed. Flip flops each frame to avoid multiple traversals
       NodeUpdateParityFlag = BIT(0),
+      // This node has been relinked and not yet visited
+      NodeLinkUpdateFlag = BIT(1),
+      // Expensive tracker if this node has been in use this update (only used for rendering)
+      NodeVisualVisited = BIT(2),
 
-      NodeInitMask = NodeUpdateParityFlag
+      NodeInitMask = NodeUpdateParityFlag | NodeLinkUpdateFlag,
+      NodeUpdateDirtyMask = NodeLinkUpdateFlag
     };
 
     // ImGui
     static constexpr float imguiLinkThickness = 2.f;
 
-    UInt getImGuiInputStartID() const { return imguiPinStart + classDescriptor->outputBlueprint.size(); }
-    UInt getImGuiOutputStartID() const { return imguiPinStart; }
+    UInt getImguiInputStartID() const { return imguiPinStart + classDescriptor->outputBlueprint.size(); }
+    UInt getImguiOutputStartID() const { return imguiPinStart; }
     //
+
+    bool requiresUpdate(bool parity);
 
     std::string nodeName;
     std::vector<InputSource> inputs; // Constrained by alive parents

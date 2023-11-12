@@ -4,7 +4,7 @@
 
 namespace BlendTree
 {
-  BlendTree::BlendTree() : imguiNodeContext{ nullptr }, imguiNextPinMajor{ 1 }, updateParity{ false }
+  BlendTree::BlendTree() : imguiNodeContext{ nullptr }, imguiNextPinMajor{ 1 }, updateParity{ false }, useTraversalCache{ true }
   {
 
   }
@@ -44,12 +44,140 @@ namespace BlendTree
     return outputNode = addNode(node);
   }
 
+  void BlendTree::handleInput()
+  {
+    if (ne::BeginCreate(ImColor(255, 255, 255), 2.0f))
+    {
+      // Manage links
+      {
+        ne::PinId startPinId = 0;
+        ne::PinId endPinId = 0;
+        if (ne::QueryNewLink(&startPinId, &endPinId))
+        {
+          bool linkPerformed = false;
+
+          // Fetch the nodes
+          UInt firstNodeId = imguiFromPinStart(startPinId.Get());
+          UInt secondNodeId = imguiFromPinStart(endPinId.Get());
+          auto& firstNodeIt = nodeGUIDMap.find(firstNodeId);
+          auto& secondNodeIt = nodeGUIDMap.find(secondNodeId);
+          auto firstNodeWPtr = (firstNodeIt == nodeGUIDMap.end()) ? BlendNodeWPtr() : firstNodeIt->second;
+          auto secondNodeWPtr = (secondNodeIt == nodeGUIDMap.end()) ? BlendNodeWPtr() : secondNodeIt->second;
+
+          auto firstNodePtr = firstNodeWPtr.lock();
+          auto secondNodePtr = secondNodeWPtr.lock();
+
+          if (firstNodePtr && secondNodePtr)
+          {
+            // Determine the nature of the nodes
+            bool firstNodeLinkIsInput = firstNodePtr->isImguiInputPin(startPinId.Get());
+            bool secondNodeLinkIsInput = secondNodePtr->isImguiInputPin(endPinId.Get());
+            if (firstNodeLinkIsInput != secondNodeLinkIsInput) // Strictly input<->output only
+            {
+              // Swap such that the first node is always output
+              if (firstNodeLinkIsInput)
+              {
+                std::swap(firstNodePtr, secondNodePtr);
+                std::swap(startPinId, endPinId);
+              }
+
+              // Get the node pins to connect
+              UInt firstNodePinIdx = firstNodePtr->imguiPinToIdx(false, startPinId.Get());
+              UInt secondNodePinIdx = secondNodePtr->imguiPinToIdx(true, endPinId.Get());
+
+              // Check this link is allowed
+              if (BlendNode::canLink(firstNodePtr, firstNodePinIdx, secondNodePtr, secondNodePinIdx))
+              {
+                // Final call
+                if (ne::AcceptNewItem(ImColor(255, 255, 128), 4.0f))
+                {
+                  BlendNode::unsafeLink(firstNodePtr, firstNodePinIdx, secondNodePtr, secondNodePinIdx);
+                }
+                linkPerformed = true; // For some reason imgui double checks before accepting a link
+              }
+            }
+          }
+
+          if (!linkPerformed)
+          {
+            ne::RejectNewItem(ImColor(128, 128, 128, 128), 1.0f);
+          }
+        }
+      }
+
+      {
+        ne::PinId pinId = 0;
+        if (ne::QueryNewNode(&pinId))
+        {
+
+
+          if (ne::AcceptNewItem())
+          {
+            // idk what this is
+            ne::Suspend();
+            ImGui::OpenPopup("Create New Param Node");
+            ne::Resume();
+            pinId = 1;
+          }
+        }
+      }
+    }
+    ne::EndCreate();
+
+    if (ne::BeginDelete())
+    {
+      ne::NodeId nodeId = 0;
+      while (ne::QueryDeletedNode(&nodeId))
+      {
+        if (ne::AcceptDeletedItem())
+        {
+          nodeId = 1;
+        }
+      }
+
+      ne::LinkId linkId = 0;
+      while (ne::QueryDeletedLink(&linkId))
+      {
+        if (ne::AcceptDeletedItem())
+        {
+
+        }
+      }
+    }
+    ne::EndDelete();
+
+    // Context menus
+    {
+      ne::Suspend();
+      if (ne::ShowNodeContextMenu(&imguiNodeIdCtx)) { ImGui::OpenPopup("Node Context Menu"); }
+      else if (ne::ShowPinContextMenu(&imguiNodePinIdCtx)) { ImGui::OpenPopup("Pin Context Menu"); }
+      else if (ne::ShowLinkContextMenu(&imguiNodeLinkIdCtx)) { ImGui::OpenPopup("Link Context Menu"); }
+      else if (ne::ShowBackgroundContextMenu()) { ImGui::OpenPopup("Create New Node"); }
+      ne::Resume();
+    }
+  }
+
   void BlendTree::updateNodes(float dt)
   {
     // Flip flop the frame parity
     updateParity = !updateParity;
 
-    outputNode->update(this, dt);
+    // Traverse using the prior order
+    if (useTraversalCache)
+    {
+      // Grab the list, freeing the old one
+      auto cacheList(std::move(cachedNodeTraversal));
+      for (auto& nodeWPtr : cacheList)
+      {
+        if (auto nodePtr = nodeWPtr.lock())
+        {
+          nodePtr->update(this, nodePtr, dt);
+        }
+      }
+    }
+
+    // Regardless of cache, the output node must be visited to ensure all nodes are up-to-date
+    outputNode->update(this, outputNode, dt);
   }
 
   void BlendTree::startRenderContext(Path configFile)
@@ -69,18 +197,7 @@ namespace BlendTree
 
     for (auto& node : nodeMap)
     {
-      //ne::BeginNode(node.first);
-
-      //ImGui::BeginHorizontal("hori");
-      //ImGui::Spring(1);
-      //ImGui::Text(node.second->getClassName().c_str());
-      //ImGui::Text(node.second->getName().c_str());
-      //ImGui::Spring(1);
-      //ImGui::EndHorizontal();
-
       node.second->render();
-
-      //ne::EndNode();
     }
 
     for (auto& node : nodeMap)
@@ -88,8 +205,10 @@ namespace BlendTree
       node.second->renderLinks();
     }
 
+    handleInput();
+    renderContextMenus();
+
     ne::End();
-    ne::SetCurrentEditor(nullptr);
   }
 
   void BlendTree::endRenderContext()
@@ -100,17 +219,25 @@ namespace BlendTree
     imguiNodeContext = nullptr;
   }
 
+  void BlendTree::notifyTraversal(BlendNodePtr& nodePtr)
+  {
+    cachedNodeTraversal.push_back(BlendNodeWPtr(nodePtr));
+  }
+
   BlendNodePtr BlendTree::addNode(BlendNode* node)
   {
     BlendNodePtr nodePtr(node);
     nodeMap.insert({
       StringTable.Add(node->getName()), nodePtr
-    });
+      });
 
     nodePtr->acceptTree(this);
 
-    nodePtr->setImguiPinStart(imguiToPinStart(imguiNextPinMajor));
-    ++imguiNextPinMajor;
+    {
+      nodePtr->setImguiPinStart(imguiToPinStart(imguiNextPinMajor));
+      nodeGUIDMap.insert_or_assign(imguiNextPinMajor, nodePtr);
+      ++imguiNextPinMajor;
+    }
     return nodePtr;
   }
 
@@ -141,5 +268,83 @@ namespace BlendTree
     }
 
     return BlendNodePtr();
+  }
+
+  void BlendTree::renderContextMenus()
+  {
+    ne::Suspend();
+
+    if (ImGui::BeginPopup("Node Context Menu"))
+    {
+      UInt nodeId = imguiFromPinStart(imguiNodeIdCtx.Get());
+      auto nodeIt = nodeGUIDMap.find(nodeId);
+
+      if (nodeIt != nodeGUIDMap.end())
+      {
+        ImGui::TextUnformatted("Node Context Menu");
+        ImGui::Separator();
+        if (auto nodePtr = nodeIt->second.lock())
+        {
+          ImGui::Text("%s", nodePtr->getName().c_str());
+          ImGui::Text("ID: %d", nodeId);
+          ImGui::Text("Type: %s", nodePtr->getClassName().c_str());
+          ImGui::Text("Inputs: %d", nodePtr->getInputCount());
+          ImGui::Text("Outputs: %d", nodePtr->getOutputCount());
+        }
+        else
+        {
+          ImGui::Text("Unknown node: %d", nodeId);
+        }
+        ImGui::Separator();
+        if (ImGui::MenuItem("Delete"))
+        {
+          ne::DeleteNode(imguiNodeIdCtx);
+        }
+      }
+      ImGui::EndPopup();
+    }
+    
+    ne::Resume();
+    /*
+    if (ImGui::BeginPopup("Pin Context Menu"))
+    {
+      auto pin = FindPin(contextPinId);
+
+      ImGui::TextUnformatted("Pin Context Menu");
+      ImGui::Separator();
+      if (pin)
+      {
+        ImGui::Text("ID: %p", pin->ID.AsPointer());
+        if (pin->Node)
+          ImGui::Text("Node: %p", pin->Node->ID.AsPointer());
+        else
+          ImGui::Text("Node: %s", "<none>");
+      }
+      else
+        ImGui::Text("Unknown pin: %p", contextPinId.AsPointer());
+
+      ImGui::EndPopup();
+    }
+
+    if (ImGui::BeginPopup("Link Context Menu"))
+    {
+      auto link = FindLink(contextLinkId);
+
+      ImGui::TextUnformatted("Link Context Menu");
+      ImGui::Separator();
+      if (link)
+      {
+        ImGui::Text("ID: %p", link->ID.AsPointer());
+        ImGui::Text("From: %p", link->StartPinID.AsPointer());
+        ImGui::Text("To: %p", link->EndPinID.AsPointer());
+      }
+      else
+        ImGui::Text("Unknown link: %p", contextLinkId.AsPointer());
+      ImGui::Separator();
+      if (ImGui::MenuItem("Delete"))
+        ed::DeleteLink(contextLinkId);
+      ImGui::EndPopup();
+    }
+    */
   }
 }

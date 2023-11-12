@@ -26,10 +26,10 @@ namespace BlendTree
     nodeFlags = tree->getUpdateParity() ? BitSet(nodeFlags, NodeUpdateParityFlag) : BitClear(nodeFlags, NodeUpdateParityFlag);
   }
 
-  void BlendNode::update(BlendTree* tree, float dt)
+  void BlendNode::update(BlendTree* tree, BlendNodePtr& context, float dt)
   {
     // Work is not required if already visited
-    if (BitMask(nodeFlags, NodeUpdateParityFlag) == tree->getUpdateParity()) { return; }
+    if (!requiresUpdate(tree->getUpdateParity())) { return; }
 
     // Set my update parity now (avoids accidental recursion)
     nodeFlags = tree->getUpdateParity() ? BitSet(nodeFlags, NodeUpdateParityFlag) : BitClear(nodeFlags, NodeUpdateParityFlag);
@@ -37,14 +37,23 @@ namespace BlendTree
     for (auto& parent : inputs)
     {
       // Per real node input
-      if (auto parentPtr = parent.parentNode.lock())
+      auto parentPtr = parent.parentNode.lock();
+
+      // Requires a real reference and a pending update
+      if (parentPtr && parentPtr->requiresUpdate(tree->getUpdateParity()))
       {
         // Recursively update parent inputs
-        parentPtr->update(tree, dt);
+        parentPtr->update(tree, parentPtr, dt);
       }
     }
 
-    // TODO: idea to cache the order of visited nodes for faster traversal next frame
+    // Clear some flags
+    nodeFlags = BitClear(nodeFlags, NodeLinkUpdateFlag);
+    // Set some flags
+    nodeFlags = BitSet(nodeFlags, NodeVisualVisited);
+
+    // Notify this node has been visited for faster tree traversal
+    tree->notifyTraversal(context);
 
     // All parent inputs are current, can now update properly
     process(dt);
@@ -64,29 +73,39 @@ namespace BlendTree
 
   void BlendNode::renderLinks()
   {
-    UInt inputPinId = getImGuiInputStartID();
+    bool nodeIsUsed = BitMask(nodeFlags, NodeVisualVisited);
+    UInt inputPinId = getImguiInputStartID();
 
     for (size_t inputIdx = 0; inputIdx < classDescriptor->inputBlueprint.size(); ++inputIdx)
     {
       auto& inputPin = classDescriptor->inputBlueprint[inputIdx];
 
       ImColor pinColour = getImguiTypeColour(inputPin.type);
+      if (!nodeIsUsed) { pinColour.Value.w *= .75f; }
+
       if (auto connection = inputs[inputIdx].parentNode.lock())
       {
         // Inputs are 1:1 unlike outputs 1:M therefore use the link ID as the input ID
 
         UInt parentPinId = connection->imguiPinStart + inputs[inputIdx].slot;
         ne::Link(inputPinId, parentPinId, inputPinId, pinColour, imguiLinkThickness);
+        if (nodeIsUsed)
+        {
+          ne::Flow(inputPinId);
+        }
       }
 
       ++inputPinId;
     }
+
+    // Let next frame decide if this node has been visited
+    nodeFlags = BitClear(nodeFlags, NodeVisualVisited);
   }
 
   bool BlendNode::canLink(BlendNodePtr& parent, UInt outIdx, BlendNodePtr& child, UInt inIdx)
   {
     return parent && child // Pointers must be valid
-      && parent->outputs.size() > outIdx && parent->inputs.size() > inIdx // Indices must be valid
+      && parent->outputs.size() > outIdx && child->inputs.size() > inIdx // Indices must be valid
       && parent->classDescriptor->outputBlueprint[outIdx].type == child->classDescriptor->inputBlueprint[inIdx].type; // Types must strictly match
   }
 
@@ -106,6 +125,9 @@ namespace BlendTree
     auto& inputSlot = child->inputs[inIdx];
     inputSlot.parentNode = BlendNodeWPtr(parent);
     inputSlot.slot = outIdx;
+
+    parent->nodeFlags = BitSet(parent->nodeFlags, NodeLinkUpdateFlag);
+    child->nodeFlags = BitSet(child->nodeFlags, NodeLinkUpdateFlag);
   }
 
   void BlendNode::renderStandardHeader(ne::Utilities::BlueprintNodeBuilder& builder)
@@ -117,7 +139,7 @@ namespace BlendTree
 
   void BlendNode::renderStandardInputPins(ne::Utilities::BlueprintNodeBuilder& builder)
   {
-    UInt inputPinId = getImGuiInputStartID();
+    UInt inputPinId = getImguiInputStartID();
     for (size_t inputPinIdx = 0; inputPinIdx < classDescriptor->inputBlueprint.size(); ++inputPinIdx)
     {
       auto& inputPin = classDescriptor->inputBlueprint[inputPinIdx];
@@ -136,7 +158,7 @@ namespace BlendTree
 
   void BlendNode::renderStandardOutputPins(ne::Utilities::BlueprintNodeBuilder& builder)
   {
-    UInt outputPinId = getImGuiOutputStartID();
+    UInt outputPinId = getImguiOutputStartID();
     for (auto& outputPin : classDescriptor->outputBlueprint)
     {
       ImColor pinColour = getImguiTypeColour(outputPin.type);
@@ -168,5 +190,9 @@ namespace BlendTree
     };
 
     return colourOptions[colourIndex];
+  }
+  bool BlendNode::requiresUpdate(bool parity)
+  {
+    return BitMask(nodeFlags, NodeUpdateParityFlag) != parity || BitMask(nodeFlags, NodeUpdateDirtyMask);
   }
 }
