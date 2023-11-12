@@ -87,7 +87,7 @@ namespace BlendTree
       {
         // Inputs are 1:1 unlike outputs 1:M therefore use the link ID as the input ID
 
-        UInt parentPinId = connection->imguiPinStart + inputs[inputIdx].slot;
+        UInt parentPinId = connection->getImguiOutputStartID() + inputs[inputIdx].slot;
         ne::Link(inputPinId, parentPinId, inputPinId, pinColour, imguiLinkThickness);
         if (nodeIsUsed)
         {

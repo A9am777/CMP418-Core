@@ -129,9 +129,19 @@ namespace BlendTree
       ne::NodeId nodeId = 0;
       while (ne::QueryDeletedNode(&nodeId))
       {
-        if (ne::AcceptDeletedItem())
+        auto nodeIt = nodeGUIDMap.find(imguiFromPinStart(nodeId.Get()));
+        if (nodeIt != nodeGUIDMap.end())
         {
-          nodeId = 1;
+          if (auto nodePtr = nodeIt->second.lock())
+          {
+            if (nodePtr != outputNode)
+            {
+              if (ne::AcceptDeletedItem())
+              {
+                removeNode(nodePtr->getName());
+              }
+            }
+          }
         }
       }
 
@@ -281,6 +291,8 @@ namespace BlendTree
 
       if (nodeIt != nodeGUIDMap.end())
       {
+        bool canDelete = true;
+
         ImGui::TextUnformatted("Node Context Menu");
         ImGui::Separator();
         if (auto nodePtr = nodeIt->second.lock())
@@ -290,15 +302,20 @@ namespace BlendTree
           ImGui::Text("Type: %s", nodePtr->getClassName().c_str());
           ImGui::Text("Inputs: %d", nodePtr->getInputCount());
           ImGui::Text("Outputs: %d", nodePtr->getOutputCount());
+
+          canDelete = nodePtr != outputNode;
         }
         else
         {
           ImGui::Text("Unknown node: %d", nodeId);
         }
-        ImGui::Separator();
-        if (ImGui::MenuItem("Delete"))
+        if (canDelete)
         {
-          ne::DeleteNode(imguiNodeIdCtx);
+          ImGui::Separator();
+          if (ImGui::MenuItem("Delete"))
+          {
+            ne::DeleteNode(imguiNodeIdCtx);
+          }
         }
       }
       ImGui::EndPopup();

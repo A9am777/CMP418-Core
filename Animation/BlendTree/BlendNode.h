@@ -143,8 +143,8 @@ namespace BlendTree
     // ImGui
     static constexpr float imguiLinkThickness = 2.f;
 
-    UInt getImguiInputStartID() const { return imguiPinStart + classDescriptor->outputBlueprint.size(); }
-    UInt getImguiOutputStartID() const { return imguiPinStart; }
+    UInt getImguiInputStartID() const { return imguiPinStart + 1 + classDescriptor->outputBlueprint.size(); }
+    UInt getImguiOutputStartID() const { return imguiPinStart + 1; }
     //
 
     bool requiresUpdate(bool parity);
