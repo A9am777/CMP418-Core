@@ -37,6 +37,19 @@ namespace BlendTree
     Param_COUNT
   };
 
+  static std::string paramTypeToString(ParamType type)
+  {
+    switch (type)
+    {
+      case Param_Bool: return "Bool";
+      case Param_Float: return "Float";
+      case Param_Int: return "Integer";
+      case Param_String: return "String";
+      case Param_Animation: return "Animation";
+      case Param_Pose: return "Pose";
+    }
+  }
+
   // Describes a parameter
   struct ParamDescriptor
   {
@@ -84,11 +97,15 @@ namespace BlendTree
     static bool tryLink(BlendNodePtr& parent, UInt outIdx, BlendNodePtr& child, UInt inIdx);
     // Quickly links two nodes
     static void unsafeLink(BlendNodePtr& parent, UInt outIdx, BlendNodePtr& child, UInt inIdx);
+    // Clears a nodes input link
+    static void clearLink(BlendNodePtr& node, UInt inIdx);
 
     inline void setImguiPinStart(UInt newStart) { imguiPinStart = newStart; }
     inline UInt getImguiPinStart() const { return imguiPinStart; }
-    inline bool isImguiInputPin(UInt id) { return id >= getImguiInputStartID(); }
-    inline UInt imguiPinToIdx(bool isInput, UInt id) { return isInput ? id - getImguiInputStartID() : id - getImguiOutputStartID(); }
+    inline bool isImguiInputPin(UInt id) const { return id >= getImguiInputStartID(); }
+    inline UInt imguiPinToIdx(bool isInput, UInt id) const { return isInput ? id - getImguiInputStartID() : id - getImguiOutputStartID(); }
+    ParamType imguiPinToType(UInt id) const;
+    std::string imguiPinToName(UInt id) const;
 
     inline const std::string& getName() const { return nodeName; }
     inline const std::string& getClassName() const { return classDescriptor->className; }

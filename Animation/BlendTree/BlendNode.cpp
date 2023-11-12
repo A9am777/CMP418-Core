@@ -130,6 +130,29 @@ namespace BlendTree
     child->nodeFlags = BitSet(child->nodeFlags, NodeLinkUpdateFlag);
   }
 
+  void BlendNode::clearLink(BlendNodePtr& node, UInt inIdx)
+  {
+    auto& inputSlot = node->inputs[inIdx];
+    inputSlot.parentNode.reset();
+    inputSlot.slot = 0;
+  }
+
+  std::string BlendNode::imguiPinToName(UInt id) const
+  {
+    bool isInput = isImguiInputPin(id);
+    UInt idx = imguiPinToIdx(isInput, id);
+
+    return isInput ? classDescriptor->inputBlueprint[idx].name : classDescriptor->outputBlueprint[idx].name;
+  }
+
+  ParamType BlendNode::imguiPinToType(UInt id) const
+  {
+    bool isInput = isImguiInputPin(id);
+    UInt idx = imguiPinToIdx(isInput, id);
+
+    return isInput ? classDescriptor->inputBlueprint[idx].type : classDescriptor->outputBlueprint[idx].type;
+  }
+
   void BlendNode::renderStandardHeader(ne::Utilities::BlueprintNodeBuilder& builder)
   {
     builder.Header();

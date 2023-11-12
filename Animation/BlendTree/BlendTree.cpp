@@ -148,9 +148,19 @@ namespace BlendTree
       ne::LinkId linkId = 0;
       while (ne::QueryDeletedLink(&linkId))
       {
-        if (ne::AcceptDeletedItem())
+        auto nodeIt = nodeGUIDMap.find(imguiFromPinStart(linkId.Get()));
+        if (nodeIt != nodeGUIDMap.end())
         {
-
+          if (auto nodePtr = nodeIt->second.lock())
+          {
+            if (nodePtr->isImguiInputPin(linkId.Get()))
+            {
+              if (ne::AcceptDeletedItem())
+              {
+                BlendNode::clearLink(nodePtr, nodePtr->imguiPinToIdx(true, linkId.Get()));
+              }
+            }
+          }
         }
       }
     }
@@ -203,7 +213,7 @@ namespace BlendTree
   {
     if (!imguiNodeContext) { return; }
     ne::SetCurrentEditor(imguiNodeContext);
-    ne::Begin("My Humble Test Editor");
+    ne::Begin("BlendNode Tree Editor");
 
     for (auto& node : nodeMap)
     {
@@ -291,8 +301,6 @@ namespace BlendTree
 
       if (nodeIt != nodeGUIDMap.end())
       {
-        bool canDelete = true;
-
         ImGui::TextUnformatted("Node Context Menu");
         ImGui::Separator();
         if (auto nodePtr = nodeIt->second.lock())
@@ -303,65 +311,82 @@ namespace BlendTree
           ImGui::Text("Inputs: %d", nodePtr->getInputCount());
           ImGui::Text("Outputs: %d", nodePtr->getOutputCount());
 
-          canDelete = nodePtr != outputNode;
-        }
-        else
-        {
-          ImGui::Text("Unknown node: %d", nodeId);
-        }
-        if (canDelete)
-        {
-          ImGui::Separator();
-          if (ImGui::MenuItem("Delete"))
+          if (nodePtr != outputNode)
           {
-            ne::DeleteNode(imguiNodeIdCtx);
+            ImGui::Separator();
+            if (ImGui::MenuItem("Delete"))
+            {
+              ne::DeleteNode(imguiNodeIdCtx);
+            }
           }
         }
       }
       ImGui::EndPopup();
     }
-    
-    ne::Resume();
-    /*
+
     if (ImGui::BeginPopup("Pin Context Menu"))
     {
-      auto pin = FindPin(contextPinId);
+      UInt nodeId = imguiFromPinStart(imguiNodePinIdCtx.Get());
+      auto nodeIt = nodeGUIDMap.find(nodeId);
 
-      ImGui::TextUnformatted("Pin Context Menu");
-      ImGui::Separator();
-      if (pin)
+      if (nodeIt != nodeGUIDMap.end())
       {
-        ImGui::Text("ID: %p", pin->ID.AsPointer());
-        if (pin->Node)
-          ImGui::Text("Node: %p", pin->Node->ID.AsPointer());
-        else
-          ImGui::Text("Node: %s", "<none>");
-      }
-      else
-        ImGui::Text("Unknown pin: %p", contextPinId.AsPointer());
+        ImGui::TextUnformatted("Pin Context Menu");
+        ImGui::Separator();
 
+        if (auto nodePtr = nodeIt->second.lock())
+        {
+          bool isInput = nodePtr->isImguiInputPin(imguiNodePinIdCtx.Get());
+
+          ImGui::Text("%s", nodePtr->imguiPinToName(imguiNodePinIdCtx.Get()).c_str());
+          ImGui::Text("ID: %d", imguiNodePinIdCtx.Get());
+          ImGui::Text("Type: %s", paramTypeToString(nodePtr->imguiPinToType(imguiNodePinIdCtx.Get())).c_str());
+
+          if (isInput)
+          {
+            ImGui::Separator();
+            if (ImGui::MenuItem("Break Link"))
+            {
+              ne::DeleteLink(imguiNodePinIdCtx.Get());
+            }
+          }
+        }
+      }
       ImGui::EndPopup();
     }
 
+    
     if (ImGui::BeginPopup("Link Context Menu"))
     {
-      auto link = FindLink(contextLinkId);
+      UInt nodeId = imguiFromPinStart(imguiNodeLinkIdCtx.Get());
+      auto nodeIt = nodeGUIDMap.find(nodeId);
 
-      ImGui::TextUnformatted("Link Context Menu");
-      ImGui::Separator();
-      if (link)
+      if (nodeIt != nodeGUIDMap.end())
       {
-        ImGui::Text("ID: %p", link->ID.AsPointer());
-        ImGui::Text("From: %p", link->StartPinID.AsPointer());
-        ImGui::Text("To: %p", link->EndPinID.AsPointer());
+        ImGui::TextUnformatted("Link Context Menu");
+        ImGui::Separator();
+
+        if (auto nodePtr = nodeIt->second.lock())
+        {
+          bool isInput = nodePtr->isImguiInputPin(imguiNodeLinkIdCtx.Get());
+
+          ImGui::Text("%s", nodePtr->imguiPinToName(imguiNodeLinkIdCtx.Get()).c_str());
+          ImGui::Text("ID: %d", imguiNodeLinkIdCtx.Get());
+          ImGui::Text("Type: %s", paramTypeToString(nodePtr->imguiPinToType(imguiNodeLinkIdCtx.Get())).c_str());
+
+          if (isInput)
+          {
+            ImGui::Separator();
+            if (ImGui::MenuItem("Delete"))
+            {
+              ne::DeleteLink(imguiNodeLinkIdCtx);
+            }
+          }
+        }
       }
-      else
-        ImGui::Text("Unknown link: %p", contextLinkId.AsPointer());
-      ImGui::Separator();
-      if (ImGui::MenuItem("Delete"))
-        ed::DeleteLink(contextLinkId);
       ImGui::EndPopup();
     }
-    */
+
+    ne::Resume();
   }
 }
