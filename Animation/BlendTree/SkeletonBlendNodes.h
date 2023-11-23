@@ -46,7 +46,6 @@ namespace BlendTree
 
     protected:
     // TODO: need to clean this up by exporting to other nodes
-    const gef::Animation* animation;
     const gef::SkeletonPose* bindPose;
     gef::SkeletonPose pose;
     float timeElapsed = .0f;

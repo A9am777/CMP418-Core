@@ -19,14 +19,13 @@ namespace BlendTree
     }
   }
 
-  ClipNode::ClipNode(Label name) : BlendNode(name, &clipClassDescriptor), animation{nullptr}
+  ClipNode::ClipNode(Label name) : BlendNode(name, &clipClassDescriptor)
   {
     outputs[0] = &pose;
   }
 
   void ClipNode::setAnimation(const gef::Animation* newAnimation, const gef::SkeletonPose* newBindPose)
   {
-    animation = newAnimation;
     bindPose = newBindPose;
 
     pose = *bindPose;
@@ -34,9 +33,15 @@ namespace BlendTree
 
   void ClipNode::process(const BlendTree* tree, float dt)
   {
+    auto animation = getInput<gef::Animation>(0);
+    auto time = getInput<float>(1);
     if (animation)
     {
-      pose.SetPoseFromAnim(*animation, *bindPose, timeElapsed);
+      pose.SetPoseFromAnim(*animation, *bindPose, time ? *time : .0f);
+    }
+    else
+    {
+      pose = *bindPose;
     }
     timeElapsed += dt;
   }
