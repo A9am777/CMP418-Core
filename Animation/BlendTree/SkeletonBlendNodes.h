@@ -44,6 +44,17 @@ namespace BlendTree
 
     void setAnimation(const gef::Animation* newAnimation, const gef::SkeletonPose* newBindPose);
 
+    enum InputIdx
+    {
+      InBaseAnimationIdx = 0,
+      InSampleTimeIdx
+    };
+
+    enum OutputIdx
+    {
+      OutSampledPoseIdx = 0
+    };
+
     protected:
     // TODO: need to clean this up by exporting to other nodes
     const gef::SkeletonPose* bindPose;
