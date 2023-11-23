@@ -1,6 +1,7 @@
 #include "BlendTree.h"
 #include "UtilityNodes.h"
 #include "SkeletonBlendNodes.h"
+#include <imgui_stdlib.h>
 
 namespace BlendTree
 {
@@ -263,7 +264,7 @@ namespace BlendTree
 
   BlendNodePtr BlendTree::findNode(Label name)
   {
-    return findNode(StringTable.Add(name));
+    return findNode(gef::GetStringId(name));
   }
 
   BlendNodePtr BlendTree::findNode(gef::StringId nameID)
@@ -384,6 +385,37 @@ namespace BlendTree
           }
         }
       }
+      ImGui::EndPopup();
+    }
+
+    if (ImGui::BeginPopup("Create New Node"))
+    {
+      ImGui::InputText("[Node name]", &imguiNextNodeName);
+
+      // Display the create new node button only if the entered name is unique
+      bool isNameUsed = findNode(imguiNextNodeName).get();
+
+      if (isNameUsed)
+      {
+        ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+
+        // Simulate button transparency
+        ImVec4 initialColour = ImGui::GetStyleColorVec4(ImGuiCol_Button);
+        initialColour.w *= .5f;
+        ImGui::PushStyleColor(ImGuiCol_Button, initialColour);
+      }
+
+      if (ImGui::Button("Create Node"))
+      {
+        ImGui::Text("xcx");
+      }
+
+      if (isNameUsed)
+      {
+        ImGui::PopItemFlag();
+        ImGui::PopStyleColor();
+      }
+      
       ImGui::EndPopup();
     }
 
