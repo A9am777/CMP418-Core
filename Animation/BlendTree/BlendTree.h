@@ -36,6 +36,7 @@ namespace BlendTree
     BlendNodePtr removeNode(Label name);
     BlendNodePtr removeNode(gef::StringId nameID);
 
+    inline bool hasTraversalCache() const { return useTraversalCache; }
     inline bool getUpdateParity() const { return updateParity; }
 
     private:
@@ -54,6 +55,7 @@ namespace BlendTree
     ne::NodeId imguiNodeIdCtx; // Last menu selected node
     ne::PinId imguiNodePinIdCtx; // Last menu selected node pin
     ne::LinkId imguiNodeLinkIdCtx; // Last menu selected node link
+    std::string imguiNextNodeName; // Node name entered by the user in a "Create..." menu
     UInt imguiNextPinMajor; // Unique id required for ImGui nodes
     std::unordered_map<UInt, BlendNodeWPtr> nodeGUIDMap; // Collection of nodes to ImGui unique id. Weakptr to avoid the hassle of cleanup
 

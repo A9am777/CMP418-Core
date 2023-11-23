@@ -164,7 +164,11 @@ namespace BlendTree
     UInt getImguiOutputStartID() const { return imguiPinStart + 1; }
     //
 
-    bool requiresUpdate(bool parity);
+    // Returns if flags indicate this node needs to be updated according to the parity signal
+    bool requiresUpdate(bool parity) const;
+
+    // Returns if flags indicate this node has to traverse its parents. Otherwise the iteration step can be culled
+    bool requiresTraversal() const;
 
     std::string nodeName;
     std::vector<InputSource> inputs; // Constrained by alive parents

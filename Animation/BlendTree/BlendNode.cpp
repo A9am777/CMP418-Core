@@ -34,16 +34,20 @@ namespace BlendTree
     // Set my update parity now (avoids accidental recursion)
     nodeFlags = tree->getUpdateParity() ? BitSet(nodeFlags, NodeUpdateParityFlag) : BitClear(nodeFlags, NodeUpdateParityFlag);
 
-    for (auto& parent : inputs)
+    // Iterate over parent nodes. This step is culled if the tree has cached a previous traversal and that traversal is guaranteed to be equivocal
+    if (requiresTraversal() || !tree->hasTraversalCache())
     {
-      // Per real node input
-      auto parentPtr = parent.parentNode.lock();
-
-      // Requires a real reference and a pending update
-      if (parentPtr && parentPtr->requiresUpdate(tree->getUpdateParity()))
+      for (auto& parent : inputs)
       {
-        // Recursively update parent inputs
-        parentPtr->update(tree, parentPtr, dt);
+        // Per real node input
+        auto parentPtr = parent.parentNode.lock();
+
+        // Requires a real reference and a pending update
+        if (parentPtr && parentPtr->requiresUpdate(tree->getUpdateParity()))
+        {
+          // Recursively update parent inputs
+          parentPtr->update(tree, parentPtr, dt);
+        }
       }
     }
 
@@ -126,7 +130,11 @@ namespace BlendTree
     inputSlot.parentNode = BlendNodeWPtr(parent);
     inputSlot.slot = outIdx;
 
-    parent->nodeFlags = BitSet(parent->nodeFlags, NodeLinkUpdateFlag);
+    
+    // It is unlikely this will be required for the parent
+    //parent->nodeFlags = BitSet(parent->nodeFlags, NodeLinkUpdateFlag);
+
+    // Used to signal the tree needs partially rebuilt
     child->nodeFlags = BitSet(child->nodeFlags, NodeLinkUpdateFlag);
   }
 
@@ -135,6 +143,9 @@ namespace BlendTree
     auto& inputSlot = node->inputs[inIdx];
     inputSlot.parentNode.reset();
     inputSlot.slot = 0;
+
+    // Used to signal the tree needs partially rebuilt
+    node->nodeFlags = BitSet(node->nodeFlags, NodeLinkUpdateFlag);
   }
 
   std::string BlendNode::imguiPinToName(UInt id) const
@@ -214,8 +225,12 @@ namespace BlendTree
 
     return colourOptions[colourIndex];
   }
-  bool BlendNode::requiresUpdate(bool parity)
+  bool BlendNode::requiresUpdate(bool parity) const
   {
     return BitMask(nodeFlags, NodeUpdateParityFlag) != parity || BitMask(nodeFlags, NodeUpdateDirtyMask);
+  }
+  bool BlendNode::requiresTraversal() const
+  {
+    return BitMask(nodeFlags, NodeUpdateDirtyMask);
   }
 }
