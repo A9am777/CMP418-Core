@@ -8,7 +8,7 @@ namespace BlendTree
   NodeClassMeta ClipNode::clipClassDescriptor;
   NodeClassMeta SkeletonOutputNode::skeleOutClassDescriptor;
 
-  void SkeletonOutputNode::process(float dt)
+  void SkeletonOutputNode::process(const BlendTree* tree, float dt)
   {
     if (instance)
     {
@@ -32,7 +32,7 @@ namespace BlendTree
     pose = *bindPose;
   }
 
-  void ClipNode::process(float dt)
+  void ClipNode::process(const BlendTree* tree, float dt)
   {
     if (animation)
     {

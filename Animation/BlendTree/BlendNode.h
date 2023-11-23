@@ -127,7 +127,7 @@ namespace BlendTree
     }
 
     // Derived classes can implement this to process any updates - knowing all input nodes have already been visited
-    virtual void process(float dt) {}
+    virtual void process(const BlendTree* tree, float dt) {}
 
     // ImGui
     void renderStandardHeader(ne::Utilities::BlueprintNodeBuilder& builder);

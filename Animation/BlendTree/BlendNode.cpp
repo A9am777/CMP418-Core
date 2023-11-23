@@ -60,7 +60,7 @@ namespace BlendTree
     tree->notifyTraversal(context);
 
     // All parent inputs are current, can now update properly
-    process(dt);
+    process(tree, dt);
   }
 
   void BlendNode::render()

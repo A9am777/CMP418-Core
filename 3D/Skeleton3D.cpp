@@ -30,6 +30,14 @@ namespace Animation
       blendOutputNodeInterim->setSkeletonInstance(this);
       blendOutput = bt::BlendNodeWPtr(blendTree->setOutputNode(blendOutputNodeInterim));
     }
+
+    for (size_t i = 0; i < baseSkeleton->getAnimationCount(); ++i)
+    {
+      if (auto animation = baseSkeleton->getAnimation(i))
+      {
+        blendTree->setReference(animation->name_id(), animation);
+      }
+    }
   }
 
   void Skeleton3DInstance::setSkeleton(const Skeleton3D* newSkeleton)

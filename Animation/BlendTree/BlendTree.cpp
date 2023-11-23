@@ -5,9 +5,12 @@
 
 namespace BlendTree
 {
-  BlendTree::BlendTree() : imguiNodeContext{ nullptr }, imguiNextPinMajor{ 1 }, updateParity{ false }, useTraversalCache{ true }
-  {
+  std::vector<Literal> BlendTree::imguiNodeTypeComboNameList;
+  std::vector<BlendTree::CreateNodeFunc> BlendTree::imguiNodeCreationFunctionList;
 
+  BlendTree::BlendTree() : imguiNodeContext{ nullptr }, imguiNextPinMajor{ 1 }, updateParity{ false }, useTraversalCache{ true }, imguiContextComboCurrentID{ 0 }
+  {
+    
   }
 
   BlendTree::~BlendTree()
@@ -25,12 +28,19 @@ namespace BlendTree
     IntGetterNode::registerClass();
     StringGetterNode::registerClass();
     AnimationGetterNode::registerClass();
-
+    
     // Setters
     BoolSetterNode::registerClass();
     FloatSetterNode::registerClass();
     IntSetterNode::registerClass();
     StringSetterNode::registerClass();
+
+    // Debuggers
+    BoolDebugNode::registerClass();
+    FloatDebugNode::registerClass();
+    IntDebugNode::registerClass();
+    StringDebugNode::registerClass();
+    AnimationDebugNode::registerClass();
 
     // Blend nodes
     AnimationNode::registerClass();
@@ -38,6 +48,8 @@ namespace BlendTree
 
     // Output
     SkeletonOutputNode::registerClass();
+
+    imguiRegisterAllNodes();
   }
 
   BlendNodePtr BlendTree::setOutputNode(BlendNode* node)
@@ -114,7 +126,6 @@ namespace BlendTree
 
           if (ne::AcceptNewItem())
           {
-            // idk what this is
             ne::Suspend();
             ImGui::OpenPopup("Create New Param Node");
             ne::Resume();
@@ -170,10 +181,10 @@ namespace BlendTree
     // Context menus
     {
       ne::Suspend();
-      if (ne::ShowNodeContextMenu(&imguiNodeIdCtx)) { ImGui::OpenPopup("Node Context Menu"); }
-      else if (ne::ShowPinContextMenu(&imguiNodePinIdCtx)) { ImGui::OpenPopup("Pin Context Menu"); }
-      else if (ne::ShowLinkContextMenu(&imguiNodeLinkIdCtx)) { ImGui::OpenPopup("Link Context Menu"); }
-      else if (ne::ShowBackgroundContextMenu()) { ImGui::OpenPopup("Create New Node"); }
+      if (ne::ShowNodeContextMenu(&imguiNodeIdCtx)) { ImGui::OpenPopup("Node Context Menu"); imguiPopup(); }
+      else if (ne::ShowPinContextMenu(&imguiNodePinIdCtx)) { ImGui::OpenPopup("Pin Context Menu"); imguiPopup(); }
+      else if (ne::ShowLinkContextMenu(&imguiNodeLinkIdCtx)) { ImGui::OpenPopup("Link Context Menu"); imguiPopup(); }
+      else if (ne::ShowBackgroundContextMenu()) { ImGui::OpenPopup("Create New Node"); imguiPopup(); }
       ne::Resume();
     }
   }
@@ -392,6 +403,19 @@ namespace BlendTree
     {
       ImGui::InputText("[Node name]", &imguiNextNodeName);
 
+      // Node type combo selection box
+      if (ImGui::BeginCombo("Type", imguiNodeTypeComboNameList[imguiContextComboCurrentID]))
+      {
+        for (size_t i = 0; i < imguiNodeTypeComboNameList.size(); ++i)
+        {
+          if (ImGui::Selectable(imguiNodeTypeComboNameList[i], i == imguiContextComboCurrentID))
+          {
+            imguiContextComboCurrentID = i;
+          }
+        }
+        ImGui::EndCombo();
+      }
+
       // Display the create new node button only if the entered name is unique
       bool isNameUsed = findNode(imguiNextNodeName).get();
 
@@ -407,9 +431,21 @@ namespace BlendTree
 
       if (ImGui::Button("Create Node"))
       {
-        ImGui::Text("xcx");
+        // Attempt to create and add the selected node type
+        if (imguiContextComboCurrentID < imguiNodeCreationFunctionList.size())
+        {
+          if (BlendNode* createdNode = imguiNodeCreationFunctionList[imguiContextComboCurrentID](this, imguiNextNodeName))
+          {
+            if (BlendNodePtr nodePtr = addNode(createdNode))
+            {
+              ne::SetNodePosition(nodePtr->getImguiPinStart(), imguiPopupLocation);
+              ImGui::CloseCurrentPopup();
+            }
+          }
+        }
       }
 
+      // End disable button
       if (isNameUsed)
       {
         ImGui::PopItemFlag();
@@ -420,5 +456,59 @@ namespace BlendTree
     }
 
     ne::Resume();
+  }
+
+  void BlendTree::imguiPopup()
+  {
+    imguiPopupLocation = ne::ScreenToCanvas(ImGui::GetMousePosOnOpeningCurrentPopup());
+    imguiContextComboCurrentID = 0;
+  }
+
+  const void* BlendTree::getGlobalVariable(ParamType type, gef::StringId nameID) const
+  {
+    auto& map = globalVariableMaps[type];
+    auto variableIt = map.find(nameID);
+    return variableIt == map.end() ? nullptr : variableIt->second;
+  }
+
+  void BlendTree::imguiRegisterAllNodes()
+  {
+    imguiNodeTypeComboNameList.clear();
+    imguiNodeCreationFunctionList.clear();
+
+    // Getters
+    //BoolGetterNode::registerClass();
+    //FloatGetterNode::registerClass();
+    //IntGetterNode::registerClass();
+    //StringGetterNode::registerClass();
+    //AnimationGetterNode::registerClass();
+
+    // Setters
+    #define PushAbstractNode(type, classification, nameprefix) imguiPushNodeClass(#nameprefix" "#type, [&](BlendTree* tree, Label name) -> BlendNode* { return new type##classification(name); });
+    PushAbstractNode(Bool, SetterNode, Set);
+    PushAbstractNode(Float, SetterNode, Set);
+    PushAbstractNode(Int, SetterNode, Set);
+    PushAbstractNode(String, SetterNode, Set);
+
+    // Debuggers
+    PushAbstractNode(Bool, DebugNode, Debug);
+    PushAbstractNode(Float, DebugNode, Debug);
+    PushAbstractNode(Int, DebugNode, Debug);
+    PushAbstractNode(String, DebugNode, Debug);
+    PushAbstractNode(Animation, DebugNode, Debug);
+
+    #undef PushAbstractNode
+
+    // Blend nodes
+    //AnimationNode::registerClass();
+    //ClipNode::registerClass();
+
+    // Output
+    //SkeletonOutputNode::registerClass();
+  }
+  void BlendTree::imguiPushNodeClass(Literal name, const CreateNodeFunc& createFunc)
+  {
+    BlendTree::imguiNodeTypeComboNameList.push_back(name);
+    BlendTree::imguiNodeCreationFunctionList.push_back(createFunc);
   }
 }

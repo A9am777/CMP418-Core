@@ -50,7 +50,7 @@ namespace BlendTree
     const gef::SkeletonPose* bindPose;
     gef::SkeletonPose pose;
     float timeElapsed = .0f;
-    virtual void process(float dt) override;
+    virtual void process(const BlendTree* tree, float dt) override;
 
     private:
     static NodeClassMeta clipClassDescriptor;
@@ -73,7 +73,7 @@ namespace BlendTree
     protected:
     Animation::Skeleton3DInstance* instance;
 
-    virtual void process(float dt) override;
+    virtual void process(const BlendTree* tree, float dt) override;
 
     private:
     static NodeClassMeta skeleOutClassDescriptor;

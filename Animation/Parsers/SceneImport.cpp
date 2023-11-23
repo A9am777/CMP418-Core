@@ -1,4 +1,5 @@
 #include "Animation/Parsers/SceneImport.h"
+#include <animation/animation.h>
 
 namespace IO
 {
@@ -64,7 +65,11 @@ namespace IO
 
     if (!scene->animations.empty())
     {
-      out.addAnimation(StringTable.Add(name), scene->animations.begin()->second);
+      if (auto animation = scene->animations.begin()->second)
+      {
+        animation->set_name_id(StringTable.Add(name));
+        out.addAnimation(animation->name_id(), animation);
+      }
     }
     return false;
   }
