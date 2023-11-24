@@ -38,16 +38,25 @@ namespace BlendTree
     static void registerClass()
     {
       clipClassDescriptor.className = "SkeleClip";
-      clipClassDescriptor.inputBlueprint = { {"BaseAnimation", Param_Animation}, { "SampleTime", Param_Float}};
+      clipClassDescriptor.inputBlueprint = { 
+        {"BaseAnimation", Param_Animation}, 
+        { "StartTime", Param_Float }, 
+        { "Progression", Param_Float }, 
+        { "Rate", Param_Float }, 
+        { "Playing", Param_Bool }, 
+        { "Loop", Param_Bool }
+      };
       clipClassDescriptor.outputBlueprint = { { "SampledPose", Param_Pose } };
     };
-
-    void setAnimation(const gef::Animation* newAnimation, const gef::SkeletonPose* newBindPose);
 
     enum InputIdx
     {
       InBaseAnimationIdx = 0,
-      InSampleTimeIdx
+      InStartTimeIdx,
+      InProgressionIdx,
+      InRateIdx,
+      InPlayingIdx,
+      InLoopIdx
     };
 
     enum OutputIdx
@@ -56,10 +65,9 @@ namespace BlendTree
     };
 
     protected:
-    // TODO: need to clean this up by exporting to other nodes
-    const gef::SkeletonPose* bindPose;
     gef::SkeletonPose pose;
-    float timeElapsed = .0f;
+    float currentTime;
+    
     virtual void process(const BlendTree* tree, float dt) override;
 
     private:

@@ -476,15 +476,17 @@ namespace BlendTree
     imguiNodeTypeComboNameList.clear();
     imguiNodeCreationFunctionList.clear();
 
+    // Sorts out abstract, multi-type nodes with no construction requirements
+    #define PushAbstractNode(type, classification, nameprefix) imguiPushNodeClass(#nameprefix" "#type, [&](BlendTree* tree, Label name) -> BlendNode* { return new type##classification(name); });
+
     // Getters
-    //BoolGetterNode::registerClass();
-    //FloatGetterNode::registerClass();
-    //IntGetterNode::registerClass();
-    //StringGetterNode::registerClass();
-    //AnimationGetterNode::registerClass();
+    PushAbstractNode(Bool, GetterNode, Get);
+    PushAbstractNode(Float, GetterNode, Get);
+    PushAbstractNode(Int, GetterNode, Get);
+    PushAbstractNode(String, GetterNode, Get);
+    PushAbstractNode(Animation, GetterNode, Get);
 
     // Setters
-    #define PushAbstractNode(type, classification, nameprefix) imguiPushNodeClass(#nameprefix" "#type, [&](BlendTree* tree, Label name) -> BlendNode* { return new type##classification(name); });
     PushAbstractNode(Bool, SetterNode, Set);
     PushAbstractNode(Float, SetterNode, Set);
     PushAbstractNode(Int, SetterNode, Set);

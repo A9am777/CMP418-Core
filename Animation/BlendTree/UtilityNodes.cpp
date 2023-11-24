@@ -13,21 +13,21 @@ namespace BlendTree
   #define ImplementGetterNode(Typename) NodeClassMeta Typename##GetterNode::get##Typename##ClassDescriptor; \
   void Typename##GetterNode::process(const BlendTree* tree, float dt)\
   {\
-    outputs[0] = (void*)tree->get##Typename(variableReferenceName); /* A bit slow. Could be improved...*/\
+    outputs[OutValueIdx] = (void*)tree->get##Typename(variableReferenceName); /* A bit slow. Could be improved...*/\
   }\
   void Typename##GetterNode::render()\
   {\
     ne::Utilities::BlueprintNodeBuilder builder;\
     builder.Begin(imguiPinStart);\
     renderStandardHeader(builder);\
-    if (outputs[0])\
+    if (outputs[OutValueIdx])\
     {\
       ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.f, .85f, .0f, 1.f));\
     }\
     ImGui::PushItemWidth(150.0f);\
       ImGui::InputText("Param Name", &variableReferenceName);\
     ImGui::PopItemWidth();\
-    if (outputs[0])\
+    if (outputs[OutValueIdx])\
     {\
       ImGui::PopStyleColor();\
     }\

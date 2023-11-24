@@ -12,7 +12,7 @@ namespace BlendTree
   class Typename##GetterNode : public BlendNode\
   {\
     public:\
-    Typename##GetterNode(Label name) : BlendNode(name, &get##Typename##ClassDescriptor) { variableReferenceName = "undefined"; }\
+    Typename##GetterNode(Label name, Label referenceName = "undefined") : BlendNode(name, &get##Typename##ClassDescriptor) { variableReferenceName = referenceName; }\
 \
     static void registerClass()\
     {\
@@ -20,6 +20,11 @@ namespace BlendTree
       descriptor.className = "Get"#Typename;\
       descriptor.inputBlueprint = { };\
       descriptor.outputBlueprint = { { "Value", ParamType } };\
+    };\
+\
+    enum OutputIdx\
+    {\
+      OutValueIdx = 0\
     };\
 \
     virtual void process(const BlendTree* tree, float dt) override;\

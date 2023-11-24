@@ -11,6 +11,7 @@
 namespace gef
 {
   class Animation;
+  class SkeletonPose;
 }
 
 namespace BlendTree
@@ -44,6 +45,9 @@ namespace BlendTree
     // Removes the node from the tree, destroying if the reference is not used
     BlendNodePtr removeNode(Label name);
     BlendNodePtr removeNode(gef::StringId nameID);
+
+    inline void setBindPose(const gef::SkeletonPose* pose) { bindPoseContext = pose; }
+    inline const gef::SkeletonPose* getBindPose() const { return bindPoseContext; }
 
     // Global variable setters
     inline void setReference(gef::StringId nameID, const bool* ref)            { setGlobalVariable(Param_Bool, nameID, ref); }
@@ -116,5 +120,8 @@ namespace BlendTree
     bool updateParity; // Distinguishes between odd and even frames so nodes can automatically identify if they have been visited without multiple passes
     bool useTraversalCache; // Whether to optimise node update traversal
     std::list<BlendNodeWPtr> cachedNodeTraversal; // Caches the order of previously visited nodes to speed up next frames order
+
+    // Due to bad gef design
+    const gef::SkeletonPose* bindPoseContext;
   };
 }

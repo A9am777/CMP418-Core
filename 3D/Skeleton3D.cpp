@@ -38,6 +38,8 @@ namespace Animation
         blendTree->setReference(animation->name_id(), animation);
       }
     }
+
+    blendTree->setBindPose(&instance->bind_pose());
   }
 
   void Skeleton3DInstance::setSkeleton(const Skeleton3D* newSkeleton)
