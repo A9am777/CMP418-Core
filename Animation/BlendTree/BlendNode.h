@@ -30,6 +30,7 @@ namespace BlendTree
   {
     Param_Bool = 0,
     Param_Float,
+    Param_Vec2,
     Param_Int,
     Param_String,
     Param_Animation,
@@ -43,6 +44,7 @@ namespace BlendTree
     {
       case Param_Bool: return "Bool";
       case Param_Float: return "Float";
+      case Param_Vec2: return "Vector2";
       case Param_Int: return "Integer";
       case Param_String: return "String";
       case Param_Animation: return "Animation";
@@ -120,11 +122,15 @@ namespace BlendTree
       UInt slot; // Static ID of output to fetch from
     };
 
+    // Safe pull of an input value
     template<typename T> T* getInput(UInt idx)
     {
       auto nodeInput = inputs[idx].parentNode.lock(); // Fetch the node reference
       return nodeInput ? nodeInput->getOutput<T>(inputs[idx].slot) : nullptr; // Return its data if it exists
     }
+
+    // Sets the internal output reference
+    inline void setOutput(UInt idx, const void* ptr) { outputs[idx] = const_cast<void*>(ptr); }
 
     // Derived classes can implement this to process any updates - knowing all input nodes have already been visited
     virtual void process(const BlendTree* tree, float dt) {}

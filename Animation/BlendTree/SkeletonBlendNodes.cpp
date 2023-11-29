@@ -1,11 +1,15 @@
-#include "3D/Skeleton3D.h"
+#include <algorithm>
+
 #include <animation/animation.h>
+
+#include "3D/Skeleton3D.h"
 #include "Animation/BlendTree/SkeletonBlendNodes.h"
 #include "BlendTree.h"
 
 namespace BlendTree
 {
-  NodeClassMeta AnimationNode::animationClassDescriptor;
+  NodeClassMeta BinaryInterpolatorNode::binaryInterpClassDescriptor;
+  NodeClassMeta QuadInterpolatorNode::quadInterpClassDescriptor;
   NodeClassMeta ClipNode::clipClassDescriptor;
   NodeClassMeta SkeletonOutputNode::skeleOutClassDescriptor;
 
@@ -22,7 +26,7 @@ namespace BlendTree
 
   ClipNode::ClipNode(Label name) : BlendNode(name, &clipClassDescriptor), currentTime{ .0f }
   {
-    outputs[OutSampledPoseIdx] = &pose;
+    setOutput(OutSampledPoseIdx, &pose);
   }
 
   void ClipNode::process(const BlendTree* tree, float dt)
@@ -82,4 +86,73 @@ namespace BlendTree
       outputs[OutSampledPoseIdx] = (void*)tree->getBindPose();
     }
   }
+
+  BinaryInterpolatorNode::BinaryInterpolatorNode(Label name) : BlendNode(name, &binaryInterpClassDescriptor)
+  {
+    setOutput(OutBlendedPoseIdx, &pose);
+  }
+
+  void BinaryInterpolatorNode::process(const BlendTree* tree, float dt)
+  {
+    // Fetch inputs
+    auto firstRef = getInput<gef::SkeletonPose>(InFirstPoseIdx);
+    auto secondRef = getInput<gef::SkeletonPose>(InSecondPoseIdx);
+    auto lerpRef = getInput<float>(InBlendParameterIdx);
+
+    // Make a best guess when poses are not linked
+    if (!firstRef) { setOutput(OutBlendedPoseIdx, tree->getBindPose()); return; }
+    if (!secondRef) { setOutput(OutBlendedPoseIdx, firstRef); return; }
+
+    // Annoying gef requirement. Initialise the pose to the bind pose if required
+    if (pose.global_pose().size() < tree->getBindPose()->global_pose().size())
+    {
+      pose = *tree->getBindPose();
+    }
+
+    // Simple lerp
+    pose.Linear2PoseBlend(*firstRef, *secondRef, std::clamp(lerpRef ? *lerpRef : .0f, .0f, 1.f));
+    setOutput(OutBlendedPoseIdx, &pose);
+  }
+
+
+  QuadInterpolatorNode::QuadInterpolatorNode(Label name) : BlendNode(name, &quadInterpClassDescriptor)
+  {
+    setOutput(OutLinearPoseIdx, &linearPose);
+    setOutput(OutBilinearPoseIdx, &bilinearPose);
+  }
+
+  void QuadInterpolatorNode::process(const BlendTree* tree, float dt)
+  {
+    // Fetch inputs
+    auto TLRef = getInput<const gef::SkeletonPose>(InTopLeftPoseIdx);
+    auto TRRef = getInput<const gef::SkeletonPose>(InTopRightPoseIdx);
+    auto BLRef = getInput<const gef::SkeletonPose>(InBottomLeftPoseIdx);
+    auto BRRef = getInput<const gef::SkeletonPose>(InBottomRightPoseIdx);
+    auto lerpRef = getInput<gef::Vector2>(InBlendParameterIdx);
+
+    // Set all invalid references to the bind pose!
+    auto bindPose = tree->getBindPose();
+    TLRef = TLRef ? TLRef : bindPose;
+    TRRef = TRRef ? TRRef : bindPose;
+    BLRef = BLRef ? BLRef : bindPose;
+    BRRef = BRRef ? BRRef : bindPose;
+
+    // Annoying gef requirement. Initialise the poses to the bind pose if required
+    if (linearPose.global_pose().size() < tree->getBindPose()->global_pose().size())
+    {
+      linearPose = bilinearPose = *tree->getBindPose();
+    }
+    
+    gef::Vector2 blendParams = lerpRef ? *lerpRef : gef::Vector2(0, 0);
+    blendParams.x = std::clamp(blendParams.x, .0f, 1.f);
+    blendParams.y = std::clamp(blendParams.y, .0f, 1.f);
+
+    // Blend between the horizontal poses
+    linearPose.Linear2PoseBlend(*TLRef, *TRRef, blendParams.x);
+    bilinearPose.Linear2PoseBlend(*BLRef, *BRRef, blendParams.x);
+
+    // Now combine each vertically!
+    bilinearPose.Linear2PoseBlend(linearPose, bilinearPose, blendParams.y);
+  }
+
 }

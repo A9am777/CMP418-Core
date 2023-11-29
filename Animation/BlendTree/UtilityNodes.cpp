@@ -38,6 +38,7 @@ namespace BlendTree
 
   ImplementGetterNode(Bool);
   ImplementGetterNode(Float);
+  ImplementGetterNode(Vector2);
   ImplementGetterNode(Int);
   ImplementGetterNode(String);
   ImplementGetterNode(Animation);
@@ -46,6 +47,7 @@ namespace BlendTree
 
   ImplementSetterNode(Bool);
   ImplementSetterNode(Float);
+  ImplementSetterNode(Vector2);
   ImplementSetterNode(Int);
   ImplementSetterNode(String);
 
@@ -68,7 +70,21 @@ namespace BlendTree
     builder.Begin(imguiPinStart);
     renderStandardHeader(builder);
     ImGui::PushItemWidth(50.0f);
-      ImGui::DragFloat("(Float)", &nodeValue);
+      ImGui::DragFloat("(Float)", &nodeValue, .01f);
+    ImGui::PopItemWidth();
+    builder.Middle();
+    renderStandardOutputPins(builder);
+    builder.End();
+  }
+
+  void Vector2SetterNode::render()
+  {
+    ne::Utilities::BlueprintNodeBuilder builder;
+
+    builder.Begin(imguiPinStart);
+    renderStandardHeader(builder);
+    ImGui::PushItemWidth(100.0f);
+    ImGui::DragFloat2("(Float2)", &nodeValue.x, .01f);
     ImGui::PopItemWidth();
     builder.Middle();
     renderStandardOutputPins(builder);
@@ -110,6 +126,7 @@ namespace BlendTree
 
   ImplementDebugNode(Bool);
   ImplementDebugNode(Float);
+  ImplementDebugNode(Vector2);
   ImplementDebugNode(Int);
   ImplementDebugNode(String);
   ImplementDebugNode(Animation);
@@ -144,6 +161,25 @@ namespace BlendTree
     if (outputs[0])
     {
       ImGui::Text("Value: %f", *(float*)outputs[0]);
+    }
+    else
+    {
+      ImGui::Text("Value: bad");
+    }
+    builder.End();
+  }
+
+  void Vector2DebugNode::render()
+  {
+    ne::Utilities::BlueprintNodeBuilder builder;
+    builder.Begin(imguiPinStart);
+    renderStandardHeader(builder);
+    renderStandardInputPins(builder);
+    builder.Middle();
+    renderStandardOutputPins(builder);
+    if (outputs[0])
+    {
+      ImGui::Text("Value: (%f, %f)", *(float*)outputs[0], *((float*)(outputs[0]) + 1));
     }
     else
     {

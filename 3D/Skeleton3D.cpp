@@ -25,6 +25,7 @@ namespace Animation
     if (blendTree) { delete blendTree; }
 
     blendTree = new bt::BlendTree();
+    blendTree->startRenderContext("Simple.json");
     {
       auto blendOutputNodeInterim = new bt::SkeletonOutputNode("Output");
       blendOutputNodeInterim->setSkeletonInstance(this);

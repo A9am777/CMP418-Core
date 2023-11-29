@@ -1,5 +1,6 @@
 #pragma once
 #include <animation/animation.h>
+#include <maths/vector2.h>
 
 #include "Animation/BlendTree/BlendNode.h"
 
@@ -37,6 +38,7 @@ namespace BlendTree
 
   DeclareGetterNode(Bool, Param_Bool)
   DeclareGetterNode(Float, Param_Float)
+  DeclareGetterNode(Vector2, Param_Vec2)
   DeclareGetterNode(Int, Param_Int)
   DeclareGetterNode(String, Param_String)
   DeclareGetterNode(Animation, Param_Animation)
@@ -71,6 +73,7 @@ namespace BlendTree
 
   DeclareSetterNode(Bool, Param_Bool, bool)
   DeclareSetterNode(Float, Param_Float, float)
+  DeclareSetterNode(Vector2, Param_Vec2, gef::Vector2)
   DeclareSetterNode(Int, Param_Int, int)
   DeclareSetterNode(String, Param_String, std::string)
   #undef DeclareSetterNode
@@ -99,6 +102,7 @@ namespace BlendTree
 
   DeclareDebugNode(Bool, Param_Bool)
   DeclareDebugNode(Float, Param_Float)
+  DeclareDebugNode(Vector2, Param_Vec2)
   DeclareDebugNode(Int, Param_Int)
   DeclareDebugNode(String, Param_String)
   DeclareDebugNode(Animation, Param_Animation)

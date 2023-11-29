@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <functional>
 
+#include <maths/vector2.h>
 #include <animation/animation.h>
 
 #include "BlendNode.h"
@@ -36,7 +37,7 @@ namespace BlendTree
     void notifyTraversal(BlendNodePtr& nodePtr);
 
     // Registers a node
-    BlendNodePtr addNode(BlendNode* node);
+    BlendNodePtr addNode(BlendNode* node, ImVec2 visualLocation = ImVec2(0, 0));
 
     // Returns a handle to a node of a name
     BlendNodePtr findNode(Label name);
@@ -54,6 +55,8 @@ namespace BlendTree
     inline void setReference(Label name, const bool* ref)                      { setGlobalVariable(Param_Bool, name, ref); }
     inline void setReference(gef::StringId nameID, const float* ref)           { setGlobalVariable(Param_Float, nameID, ref); }
     inline void setReference(Label name, const float* ref)                     { setGlobalVariable(Param_Float, name, ref); }
+    inline void setReference(gef::StringId nameID, const gef::Vector2* ref)    { setGlobalVariable(Param_Vec2, nameID, ref); }
+    inline void setReference(Label name, const gef::Vector2* ref)              { setGlobalVariable(Param_Vec2, name, ref); }
     inline void setReference(gef::StringId nameID, const int* ref)             { setGlobalVariable(Param_Int, nameID, ref); }
     inline void setReference(Label name, const int* ref)                       { setGlobalVariable(Param_Int, name, ref); }
     inline void setReference(gef::StringId nameID, const std::string* ref)     { setGlobalVariable(Param_String, nameID, ref); }
@@ -66,6 +69,8 @@ namespace BlendTree
     inline const bool* getBool(Label name) const                           { return (bool*)getGlobalVariable(Param_Bool, name); }
     inline const float* getFloat(gef::StringId nameID) const               { return (float*)getGlobalVariable(Param_Float, nameID); }
     inline const float* getFloat(Label name) const                         { return (float*)getGlobalVariable(Param_Float, name); }
+    inline const gef::Vector2* getVector2(gef::StringId nameID) const      { return (gef::Vector2*)getGlobalVariable(Param_Vec2, nameID); }
+    inline const gef::Vector2* getVector2(Label name) const                { return (gef::Vector2*)getGlobalVariable(Param_Vec2, name); }
     inline const int* getInt(gef::StringId nameID) const                   { return (int*)getGlobalVariable(Param_Int, nameID); }
     inline const int* getInt(Label name) const                             { return (int*)getGlobalVariable(Param_Int, name); }
     inline const std::string* getString(gef::StringId nameID) const        { return (std::string*)getGlobalVariable(Param_String, nameID); }

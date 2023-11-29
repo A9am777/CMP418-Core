@@ -25,6 +25,7 @@ namespace BlendTree
     // Getters
     BoolGetterNode::registerClass();
     FloatGetterNode::registerClass();
+    Vector2GetterNode::registerClass();
     IntGetterNode::registerClass();
     StringGetterNode::registerClass();
     AnimationGetterNode::registerClass();
@@ -32,19 +33,22 @@ namespace BlendTree
     // Setters
     BoolSetterNode::registerClass();
     FloatSetterNode::registerClass();
+    Vector2SetterNode::registerClass();
     IntSetterNode::registerClass();
     StringSetterNode::registerClass();
 
     // Debuggers
     BoolDebugNode::registerClass();
     FloatDebugNode::registerClass();
+    Vector2DebugNode::registerClass();
     IntDebugNode::registerClass();
     StringDebugNode::registerClass();
     AnimationDebugNode::registerClass();
 
     // Blend nodes
-    AnimationNode::registerClass();
     ClipNode::registerClass();
+    BinaryInterpolatorNode::registerClass();
+    QuadInterpolatorNode::registerClass();
 
     // Output
     SkeletonOutputNode::registerClass();
@@ -256,7 +260,7 @@ namespace BlendTree
     cachedNodeTraversal.push_back(BlendNodeWPtr(nodePtr));
   }
 
-  BlendNodePtr BlendTree::addNode(BlendNode* node)
+  BlendNodePtr BlendTree::addNode(BlendNode* node, ImVec2 visualLocation)
   {
     BlendNodePtr nodePtr(node);
     nodeMap.insert({
@@ -266,8 +270,11 @@ namespace BlendTree
     nodePtr->acceptTree(this);
 
     {
-      nodePtr->setImguiPinStart(imguiToPinStart(imguiNextPinMajor));
+      UInt nodeID = imguiToPinStart(imguiNextPinMajor);
       nodeGUIDMap.insert_or_assign(imguiNextPinMajor, nodePtr);
+      nodePtr->setImguiPinStart(nodeID);
+      ne::SetCurrentEditor(imguiNodeContext);
+      ne::SetNodePosition(nodeID, visualLocation);
       ++imguiNextPinMajor;
     }
     return nodePtr;
@@ -482,6 +489,7 @@ namespace BlendTree
     // Getters
     PushAbstractNode(Bool, GetterNode, Get);
     PushAbstractNode(Float, GetterNode, Get);
+    PushAbstractNode(Vector2, GetterNode, Get);
     PushAbstractNode(Int, GetterNode, Get);
     PushAbstractNode(String, GetterNode, Get);
     PushAbstractNode(Animation, GetterNode, Get);
@@ -489,24 +497,32 @@ namespace BlendTree
     // Setters
     PushAbstractNode(Bool, SetterNode, Set);
     PushAbstractNode(Float, SetterNode, Set);
+    PushAbstractNode(Vector2, SetterNode, Set);
     PushAbstractNode(Int, SetterNode, Set);
     PushAbstractNode(String, SetterNode, Set);
 
     // Debuggers
     PushAbstractNode(Bool, DebugNode, Debug);
     PushAbstractNode(Float, DebugNode, Debug);
+    PushAbstractNode(Vector2, DebugNode, Debug);
     PushAbstractNode(Int, DebugNode, Debug);
     PushAbstractNode(String, DebugNode, Debug);
     PushAbstractNode(Animation, DebugNode, Debug);
 
     #undef PushAbstractNode
 
+    // Sorts out normal nodes with no construction requirements
+    #define PushVanillaNode(implName, className) imguiPushNodeClass(#className, [&](BlendTree* tree, Label name) -> BlendNode* { return new implName(name); });
+
     // Blend nodes
-    //AnimationNode::registerClass();
-    //ClipNode::registerClass();
+    PushVanillaNode(ClipNode, SkeleClip);
+    PushVanillaNode(BinaryInterpolatorNode, BinaryInterp);
+    PushVanillaNode(QuadInterpolatorNode, QuadInterp);
 
     // Output
     //SkeletonOutputNode::registerClass();
+
+    #undef PushVanillaNode
   }
   void BlendTree::imguiPushNodeClass(Literal name, const CreateNodeFunc& createFunc)
   {
