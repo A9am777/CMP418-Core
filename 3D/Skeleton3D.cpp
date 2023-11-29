@@ -1,4 +1,3 @@
-#include <motion_clip_player.h>
 #include <animation/animation.h>
 #include "Animation/BlendTree/BlendTree.h"
 #include "Animation/BlendTree/SkeletonBlendNodes.h"
@@ -10,12 +9,11 @@ namespace Animation
 {
   Skeleton3DInstance::Skeleton3DInstance() : baseSkeleton{ nullptr }, instance{ nullptr }, blendTree{nullptr}
   {
-    player = new MotionClipPlayer();
+    
   }
 
   Skeleton3DInstance::~Skeleton3DInstance()
   {
-    delete player; player = nullptr;
     if (blendTree) { delete blendTree; blendTree = nullptr; }
     if (instance) { delete instance; instance = nullptr; }
   }
@@ -56,11 +54,6 @@ namespace Animation
       identity.SetIdentity();
       instance->set_transform(identity);
     }
-
-    // Animation player
-    player->Init(instance->bind_pose());
-
-    setAnimation(0);
   }
 
   void Skeleton3DInstance::setWorldTransform(const gef::Matrix44& transform)
@@ -71,13 +64,6 @@ namespace Animation
   void Skeleton3DInstance::setPose(const gef::SkeletonPose& newPose)
   {
     instance->UpdateBoneMatrices(newPose);
-  }
-
-  void Skeleton3DInstance::setAnimation(UInt animID)
-  {
-    player->set_clip(baseSkeleton->getAnimation(animID));
-    player->set_looping(true);
-    player->set_anim_time(0.0f);
   }
 
   void Skeleton3DInstance::update(float dt)
@@ -92,7 +78,7 @@ namespace Animation
     {
       if (auto a = dynamic_cast<bt::SkeletonOutputNode*>(outputBlend.get()))
       {
-        player->Update(dt, instance->bind_pose());
+        
         
       }
     }

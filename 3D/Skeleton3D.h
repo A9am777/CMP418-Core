@@ -60,7 +60,6 @@ namespace Animation
     void setWorldTransform(const gef::Matrix44& transform);
     void setPose(const gef::SkeletonPose& newPose);
 
-    void setAnimation(UInt animID);
     inline const Skeleton3D* getSkeleton() const { return baseSkeleton; }
     inline const gef::SkeletonPose* getBindPose() const { return &instance->bind_pose(); }
 
