@@ -29,6 +29,21 @@ namespace Textures
     return subDivisions.getID(nameID);
   }
 
+  TextureAtlas& TextureAtlas::operator=(TextureAtlas& other)
+  {
+    subDivisions = other.subDivisions;
+    texDesc = other.texDesc;
+    tex = other.tex;
+    if (regions) { delete[] regions; regions = nullptr; }
+    if (other.regions)
+    {
+      regions = new RegionPack[subDivisions.getHeapSize()];
+      std::memcpy(regions, other.regions, subDivisions.getHeapSize() * sizeof(RegionPack));
+    }
+
+    return *this;
+  }
+
   void TextureAtlas::setTexture(UInt textureID, const TextureDesc& desc)
   {
     tex = textureID;
@@ -108,7 +123,7 @@ namespace Textures
     return SNULL;
   }
 
-  void TextureCollection::loadAll(gef::Platform& platform)
+  void TextureCollection::loadAll(Path rootPath, gef::Platform& platform)
   {
     // Load each texture by stored path into a slot
     for (const auto& namedResource : resourceMap.getNameMap())
@@ -118,6 +133,7 @@ namespace Textures
 
       std::string path;
       StringTable.Find(namedResource.first, path);
+      path = rootPath + fsp + path;
       textureSlot = CreateTextureFromPNG(path.c_str(), platform);
     }
     baked = true;

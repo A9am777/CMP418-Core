@@ -34,7 +34,7 @@ namespace Textures
     ~TextureCollection();
 
     UInt add(Path path, const TextureDesc& desc);
-    void loadAll(gef::Platform& platform);
+    void loadAll(Path rootPath, gef::Platform& platform);
     UInt getTextureDesc(gef::StringId path, TextureDesc*& out);
 
     inline const gef::Texture* getTextureData(UInt id) const { return resourceMap.get(id); }
@@ -70,6 +70,8 @@ namespace Textures
     UInt getDivision(gef::StringId nameID) const;
     //
     
+    TextureAtlas& operator=(TextureAtlas& other);
+
     void setTexture(UInt textureID, const TextureDesc& desc);
 
     // This can be used to ascribe a more cache friendly ordering before baking!
