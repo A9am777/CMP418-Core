@@ -9,6 +9,14 @@ namespace Animation
   class SpriteSheet
   {
     public:
+    struct DetailedAnimation
+    {
+      std::vector<gef::StringId> frameData;
+      UInt bakedStartFrame;
+      UInt bakedEndFrame; // +1 past the final frame
+      float frametime;
+    };
+
     SpriteSheet();
 
     // Slow
@@ -20,20 +28,14 @@ namespace Animation
     // Returns the current regionID of the frame representing this animation. Time will be reset to within range for precision
     UInt getAnimationFrameID(UInt animID, float& time) const;
 
+    inline bool isBaked() const { return atlas.isBaked(); }
     inline Textures::TextureAtlas& getAtlas() { return atlas; }
     inline const Textures::TextureAtlas& getAtlas() const { return atlas; }
     inline float getAnimationFrametime(UInt animID) const { return detailedAnimations.get(animID).frametime; }
     inline UInt getAnimationCount() const { return detailedAnimations.getHeapSize(); }
+    inline const NamedHeap<DetailedAnimation>& getAnimations() const { return detailedAnimations; }
 
     private:
-    struct DetailedAnimation
-    {
-      std::vector<gef::StringId> frameData;
-      UInt bakedStartFrame;
-      UInt bakedEndFrame; // +1 past the final frame
-      float frametime;
-    };
-
     NamedHeap<DetailedAnimation> detailedAnimations;
     Textures::TextureAtlas atlas; // Frame data gets baked directly into the atlas
   };

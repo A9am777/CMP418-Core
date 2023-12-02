@@ -37,6 +37,7 @@ namespace Animation
     UInt getAnimationID(Label label) const;
     UInt getAnimationID(gef::StringId labelID) const;
 
+    inline const NamedHeap<const gef::Animation*>& getAnimations() const { return animations; }
     inline const gef::Animation* getAnimation(UInt id) const { return animations.get(id); }
     inline const size_t getAnimationCount() const { return animations.getHeapSize(); }
     inline const gef::Skeleton* getSkeleton() const { return skeleton; }

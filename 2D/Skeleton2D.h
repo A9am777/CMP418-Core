@@ -160,6 +160,8 @@ namespace Animation
     inline Skeleton2DSkin& getSkin(UInt id) { return skins[id]; }
     inline Skeleton2D& getSkeleton() { return skeleton; }
     inline Skeleton2DSlots& getSlots() { return slots; }
+    inline const NamedHeap<DopeSheet2D>& getAnimations() const { return detailedAnimationData; }
+    inline size_t getAnimationCount() const { return detailedAnimationData.getHeapSize(); }
     inline bool isBaked() const { return baked; }
 
     private:

@@ -2,4 +2,4 @@
 
 #include <system/string_id.h>
 
-static gef::StringIdTable StringTable;
+extern gef::StringIdTable StringTable;
