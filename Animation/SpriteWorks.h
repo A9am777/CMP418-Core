@@ -53,6 +53,10 @@ namespace Animation
     void play(UInt animID);
     void setTexture(Textures::TextureCollection& texCollection);
     inline void setGlobalTransform(const gef::Matrix33& newTransform) { globalTransform = newTransform; }
+    inline void setPlaying(bool play) { playing = play; }
+    inline bool getPlaying() const { return playing; }
+    inline UInt getCurrentAnim() const { return currentAnimation; }
+    inline const SpriteSheet* getSheet() const { return sheet; }
 
     private:
     gef::Sprite sprite;

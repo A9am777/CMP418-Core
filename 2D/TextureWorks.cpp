@@ -129,12 +129,13 @@ namespace Textures
     for (const auto& namedResource : resourceMap.getNameMap())
     {
       auto& textureSlot = resourceMap.get(namedResource.second.getHeapID());
-      if (textureSlot) { delete textureSlot; }
-
-      std::string path;
-      StringTable.Find(namedResource.first, path);
-      path = rootPath + fsp + path;
-      textureSlot = CreateTextureFromPNG(path.c_str(), platform);
+      if (!textureSlot) 
+      {
+        std::string path;
+        StringTable.Find(namedResource.first, path);
+        path = rootPath + fsp + path;
+        textureSlot = CreateTextureFromPNG(path.c_str(), platform);
+      }
     }
     baked = true;
   }
