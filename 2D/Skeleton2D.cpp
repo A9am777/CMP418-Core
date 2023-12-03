@@ -7,19 +7,14 @@
 
 namespace Animation
 {
-  Skeleton2D::Skeleton2D()
+  Skeleton2D::Skeleton2D() : rootBoneID{NULL}
   {
-    detailedDescriptor = new ColdDesc();
-  }
-  Skeleton2D::~Skeleton2D()
-  {
-    delete detailedDescriptor; detailedDescriptor = nullptr;
+    
   }
 
   Skeleton2D::DetailedBone& Skeleton2D::addBone(Label name)
   {
-    auto& desc = *detailedDescriptor;
-    return desc.boneCollection.add(name).first;
+    return boneCollection.add(name).first;
   }
 
   bool Skeleton2D::bake()
@@ -27,10 +22,9 @@ namespace Animation
     // Ensure information is accurate
     linkDescriptor();
 
-    auto& desc = *detailedDescriptor;
     // Traverse tree by depth, ensuring bones are packed sequentially
     {
-      boneList.resize(desc.boneCollection.getHeapSize()); // May overallocate where bone data is bad, this is not an issue
+      boneList.resize(boneCollection.getHeapSize()); // May overallocate where bone data is bad, this is not an issue
       // The recursive step
       std::function<void(DetailedBone&, UInt&)> nodeTraversal = [&](DetailedBone& parent, UInt& allocProgress)
       {
@@ -44,7 +38,7 @@ namespace Animation
         // Now explore children
         for(auto& childID : parent.children)
         {
-          auto& childBone = desc.boneCollection.get(childID);
+          auto& childBone = boneCollection.get(childID);
           childBone.flattenedID = ++allocProgress;
 
           auto& flatBone = boneList[allocProgress];
@@ -56,7 +50,7 @@ namespace Animation
       };
 
       // Start from the root and build the flattened skeletal structure
-      auto& rootBone = desc.boneCollection.get(desc.root);
+      auto& rootBone = boneCollection.get(rootBoneID);
       rootBone.flattenedID = 0;
       UInt progress = 0;
       nodeTraversal(rootBone, progress);
@@ -65,42 +59,54 @@ namespace Animation
       boneList[0].globalTransform.SetIdentity();
     }
 
+    // Generate global transforms for reference
+    forwardKinematics(boneList);
+
     return isBaked();
+  }
+
+  bool Skeleton2D::bindTo(Skeleton2D::Instance& inst)
+  {
+    if (!isBaked()) { return false; }
+
+    inst.baseSkeleton = this;
+    inst.boneList = boneList;
+
+    return true;
   }
 
   UInt Skeleton2D::getBoneFlatID(gef::StringId nameID) const
   {
     if (!isBaked()) { return SNULL; }
     
-    auto& desc = *detailedDescriptor;
-    auto boneID = desc.boneCollection.getID(nameID);
+    auto boneID = boneCollection.getID(nameID);
     
-    return boneID == SNULL ? SNULL : desc.boneCollection.get(boneID).flattenedID;
+    return boneID == SNULL ? SNULL : boneCollection.get(boneID).flattenedID;
   }
 
-  Maths::Transform2D& Skeleton2D::getLocalPose(UInt flatID)
+  Maths::Transform2D& Skeleton2D::getLocalPose(std::vector<FlatBone>& bones, UInt flatID)
   {
-    return boneList[flatID].localTransform;
+    return bones[flatID].localTransform;
   }
 
-  void Skeleton2D::resetPose()
+  void Skeleton2D::resetPose(std::vector<FlatBone>& bones)
   {
-    for (size_t i = 1; i < boneList.size(); ++i)
+    for (size_t i = 1; i < bones.size(); ++i)
     {
-      auto& bone = boneList[i];
+      auto& bone = bones[i];
       bone.localTransform.scale = gef::Vector2::kOne;
       bone.localTransform.translation = gef::Vector2::kZero;
       bone.localTransform.rotation = 0.f;
     }
   }
 
-  void Skeleton2D::forwardKinematics()
+  void Skeleton2D::forwardKinematics(std::vector<FlatBone>& bones)
   {
     // Start after the root and traverse the tree linearly
-    for (size_t i = 1; i < boneList.size(); ++i)
+    for (size_t i = 1; i < bones.size(); ++i)
     {
-      auto& thisBone = boneList[i];
-      auto& thisParent = boneList[thisBone.parent];
+      auto& thisBone = bones[i];
+      auto& thisParent = bones[thisBone.parent];
 
       gef::Matrix33 localMat;
       Maths::Transform2D combinedTransform = thisBone.restTransform + thisBone.localTransform;
@@ -112,29 +118,27 @@ namespace Animation
 
   void Skeleton2D::linkDescriptor()
   {
-    auto& desc = *detailedDescriptor;
-
     // Clean previous attempts and search for the root
-    for (size_t id = 0; id < desc.boneCollection.getHeapSize(); ++id)
+    for (size_t id = 0; id < boneCollection.getHeapSize(); ++id)
     {
-      auto& bone = desc.boneCollection.get(id);
+      auto& bone = boneCollection.get(id);
 
       bone.children.clear();
       if(bone.parentName.empty()) // Assume root has no parent
       {
-        desc.root = static_cast<UInt>(id);
+        rootBoneID = static_cast<UInt>(id);
       }
     }
 
     // Link children to their parent
-    for (size_t childID = 0; childID < desc.boneCollection.getHeapSize(); ++childID)
+    for (size_t childID = 0; childID < boneCollection.getHeapSize(); ++childID)
     {
-      auto& childBone = desc.boneCollection.get(childID);
+      auto& childBone = boneCollection.get(childID);
 
-      UInt parentHeapID = desc.boneCollection.getID(childBone.parentName);
+      UInt parentHeapID = boneCollection.getID(childBone.parentName);
       if(parentHeapID != SNULL)
       {
-        desc.boneCollection.get(parentHeapID)
+        boneCollection.get(parentHeapID)
           .children.push_back(childID);
       }
     }
@@ -217,16 +221,26 @@ namespace Animation
           slotTracks[boneHeapID] = detailedSheet.bakeTrack(detailedTrack);
         });
       }
-      setAnimation(0);
+      
     }
 
     return baked;
   }
 
-  void SkinnedSkeleton2D::update(float dt)
+  bool SkinnedSkeleton2D::bindTo(SkinnedSkeleton2D::Instance& inst)
   {
-    skeleton.resetPose();
-    animationPlayer.update(dt);
+    if (!isBaked()) { return false; }
+    inst.currentSkin = 0;
+    inst.baseSkeleton = this;
+    skeleton.bindTo(inst.skeleInst);
+    setAnimation(inst, 0);
+    return true;
+  }
+
+  void SkinnedSkeleton2D::update(SkinnedSkeleton2D::Instance& inst, float dt) const
+  {
+    Skeleton2D::resetPose(inst.skeleInst.boneList);
+    inst.animationPlayer.update(dt);
 
     for (size_t i = 0; i < skeleton.getBoneCount(); ++i)
     {
@@ -234,15 +248,15 @@ namespace Animation
       if (UInt boneHeapID = slots.getBoneID(i)) // We don't need to draw the root
       {
         // Apply the current animation
-        auto& localPose = skeleton.getLocalPose(boneHeapID);
-        localPose = localPose + animationPlayer.getCurrentTransform(boneHeapID);
+        auto& localPose = skeleton.getLocalPose(inst.skeleInst.boneList, boneHeapID);
+        localPose = localPose + inst.animationPlayer.getCurrentTransform(boneHeapID);
       }
     }
 
-    skeleton.forwardKinematics();
+    Skeleton2D::forwardKinematics(inst.skeleInst.boneList);
   }
 
-  void SkinnedSkeleton2D::render(gef::SpriteRenderer* renderer, const Textures::TextureCollection& textures)
+  void SkinnedSkeleton2D::render(SkinnedSkeleton2D::Instance& inst, gef::SpriteRenderer* renderer, const Textures::TextureCollection& textures) const
   {
     if (!atlas || !baked) { return; }
 
@@ -270,7 +284,7 @@ namespace Animation
 
         // Build the sprite transform
         gef::Matrix33 finalTransform = gef::Matrix33::kIdentity;
-        finalTransform = skeleton.getBoneTransform(boneHeapID) * finalTransform; // Apply world
+        finalTransform = skeleton.getBoneTransform(inst.skeleInst.boneList, boneHeapID) * finalTransform; // Apply world
         finalTransform = skin.getTransform(boneHeapID) * finalTransform; // Apply sprite offset
         finalTransform = divData->transform * finalTransform; // Apply subtexture offset
         
@@ -287,22 +301,22 @@ namespace Animation
     return detailedAnimationData.add(name).second;
   }
 
-  void SkinnedSkeleton2D::setAnimation(UInt animID)
+  void SkinnedSkeleton2D::setAnimation(SkinnedSkeleton2D::Instance& inst, UInt animID)
   {
-    currentAnimation = animID;
+    inst.currentAnimation = animID;
     if (isBaked())
     {
       // Copy animation data over to the player
-      animationPlayer.setSheet(&detailedAnimationData.get(animID));
-      animationPlayer.resizeTracks(skeleton.getBoneCount());
+      inst.animationPlayer.setSheet(&detailedAnimationData.get(animID));
+      inst.animationPlayer.resizeTracks(skeleton.getBoneCount());
       auto& bakedTracks = animations[animID];
       for (size_t trackID = 0; trackID < bakedTracks.size(); ++trackID)
       {
-        animationPlayer.setTrack(trackID, bakedTracks[trackID]);
+        inst.animationPlayer.setTrack(trackID, bakedTracks[trackID]);
       }
 
-      animationPlayer.reset();
-      setPlaying(true);
+      inst.animationPlayer.reset();
+      inst.setPlaying(true);
     }
   }
 
@@ -362,5 +376,33 @@ namespace Animation
     transMat.SetTranslation(gef::Vector2(translation.x, translation.y));
 
     transform = rotMat * transMat;
+  }
+
+  SkinnedSkeleton2D::Instance::Instance() : baseSkeleton{ nullptr }
+  {
+
+  }
+  void SkinnedSkeleton2D::Instance::update(float dt)
+  {
+    if (baseSkeleton)
+    {
+      baseSkeleton->update(*this, dt);
+    }
+  }
+
+  void SkinnedSkeleton2D::Instance::render(gef::SpriteRenderer* renderer, const Textures::TextureCollection& textures)
+  {
+    if (baseSkeleton)
+    {
+      baseSkeleton->render(*this, renderer, textures);
+    }
+  }
+
+  void SkinnedSkeleton2D::Instance::setAnimation(UInt animID)
+  {
+    if (baseSkeleton)
+    {
+      baseSkeleton->setAnimation(*this, animID);
+    }
   }
 }
