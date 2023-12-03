@@ -151,7 +151,7 @@ namespace Animation
 
     UInt addAnimation(Label name);
     void setAnimation(UInt anim);
-    void setPlay(bool animationPlay) { animationPlayer.setPlaying(animationPlay); }
+    inline void setPlaying(bool animationPlay) { animationPlayer.setPlaying(animationPlay); }
     inline DopeSheet2D& getAnimationData(UInt animID) { return detailedAnimationData.get(animID); }
     DopeSheet2D::DetailedTrack& getAnimationTrack(UInt animID, Label slotName);
 
@@ -162,6 +162,8 @@ namespace Animation
     inline Skeleton2DSlots& getSlots() { return slots; }
     inline const NamedHeap<DopeSheet2D>& getAnimations() const { return detailedAnimationData; }
     inline size_t getAnimationCount() const { return detailedAnimationData.getHeapSize(); }
+    inline bool getPlaying() const { return animationPlayer.isPlaying(); }
+    inline UInt getCurrentAnim() const { return currentAnimation; }
     inline bool isBaked() const { return baked; }
 
     private:

@@ -302,7 +302,7 @@ namespace Animation
       }
 
       animationPlayer.reset();
-      setPlay(true);
+      setPlaying(true);
     }
   }
 

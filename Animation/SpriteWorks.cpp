@@ -78,7 +78,7 @@ namespace Animation
     return regionID;
   }
 
-  SpriteInstance::SpriteInstance() : sheet{ nullptr }, currentAnimation{ SNULL }, playing{false}
+  SpriteInstance::SpriteInstance() : sheet{ nullptr }, currentAnimation{ SNULL }, playing{ false }, elapsedTime{.0f}
   {
     globalTransform.SetIdentity();
     spriteTransform.SetIdentity();
