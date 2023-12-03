@@ -147,9 +147,8 @@ namespace Animation
 
       void update(float dt);
       void render(gef::SpriteRenderer* renderer, const Textures::TextureCollection& textures);
-
-      
       void setAnimation(UInt animID);
+
       inline void setWorldTransform(const gef::Matrix33& worldMat) { Skeleton2D::setWorldTransform(skeleInst.boneList, worldMat); }
       inline void setPlaying(bool animationPlay) { animationPlayer.setPlaying(animationPlay); }
       inline SkinnedSkeleton2D* getSkinnedSkeleton() { return baseSkeleton; }
@@ -171,25 +170,19 @@ namespace Animation
 
     bool bake(Textures::TextureAtlas* atlas);
     bool bindTo(SkinnedSkeleton2D::Instance& inst); // Transfers to an instance for use
-
-    void update(SkinnedSkeleton2D::Instance& inst, float dt) const;
-    void render(SkinnedSkeleton2D::Instance& inst, gef::SpriteRenderer* renderer, const Textures::TextureCollection& textures) const;
     void setAnimation(SkinnedSkeleton2D::Instance& inst, UInt anim);
 
     UInt addAnimation(Label name);
-    inline void setPlaying(bool animationPlay) { animationPlayer.setPlaying(animationPlay); }
     inline DopeSheet2D& getAnimationData(UInt animID) { return detailedAnimationData.get(animID); }
     DopeSheet2D::DetailedTrack& getAnimationTrack(UInt animID, Label slotName);
 
     inline UInt addSkin() { skins.emplace_back(); return static_cast<UInt>(skins.size() - 1); }
-    inline void setSkin(UInt id) { currentSkin = id; }
     inline Skeleton2DSkin& getSkin(UInt id) { return skins[id]; }
     inline Skeleton2D& getSkeleton() { return skeleton; }
     inline Skeleton2DSlots& getSlots() { return slots; }
+    inline Textures::TextureAtlas* getAtlas() { return atlas; }
     inline const NamedHeap<DopeSheet2D>& getAnimations() const { return detailedAnimationData; }
     inline size_t getAnimationCount() const { return detailedAnimationData.getHeapSize(); }
-    inline bool getPlaying() const { return animationPlayer.isPlaying(); }
-    inline UInt getCurrentAnim() const { return currentAnimation; }
     inline bool isBaked() const { return baked; }
 
     private:
@@ -197,15 +190,12 @@ namespace Animation
 
     Skeleton2DSlots slots;
     std::vector<Skeleton2DSkin> skins;
-    UInt currentSkin;
 
     Textures::TextureAtlas* atlas;
     Skeleton2D skeleton;
 
     NamedHeap<DopeSheet2D> detailedAnimationData;
     std::vector<std::vector<DopeSheet2D::BakedTrack*>> animations;
-    DopePlayer2D animationPlayer;
-    UInt currentAnimation;
 
     bool baked;
   };

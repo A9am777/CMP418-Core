@@ -180,7 +180,6 @@ namespace Animation
 
   SkinnedSkeleton2D::SkinnedSkeleton2D()
   {
-    currentSkin = currentAnimation = 0;
     atlas = nullptr;
     baked = false;
   }
@@ -238,65 +237,6 @@ namespace Animation
     return true;
   }
 
-  void SkinnedSkeleton2D::update(SkinnedSkeleton2D::Instance& inst, float dt) const
-  {
-    Skeleton2D::resetPose(inst.skeleInst.boneList);
-    inst.animationPlayer.update(dt);
-
-    for (size_t i = 0; i < skeleton.getBoneCount(); ++i)
-    {
-      // Convert to the optimised bone index
-      if (UInt boneHeapID = slots.getBoneID(i)) // We don't need to draw the root
-      {
-        // Apply the current animation
-        auto& localPose = skeleton.getLocalPose(inst.skeleInst.boneList, boneHeapID);
-        localPose = localPose + inst.animationPlayer.getCurrentTransform(boneHeapID);
-      }
-    }
-
-    Skeleton2D::forwardKinematics(inst.skeleInst.boneList);
-  }
-
-  void SkinnedSkeleton2D::render(SkinnedSkeleton2D::Instance& inst, gef::SpriteRenderer* renderer, const Textures::TextureCollection& textures) const
-  {
-    if (!atlas || !baked) { return; }
-
-    // Hold a sprite with the texture atlas
-    gef::Sprite sprite;
-    if (textures.isBaked())
-    {
-      sprite.set_texture(textures.getTextureData(atlas->getTextureID()));
-    }
-
-    auto& skin = skins[currentSkin];
-
-    // Traverse the draw list
-    for (size_t i = 0; i < skeleton.getBoneCount(); ++i)
-    {
-      // Convert to the optimised bone index
-      if (UInt boneHeapID = slots.getBoneID(i)) // We don't need to draw the root
-      {
-        auto divData = atlas->getData(skin.getSubtextureID(boneHeapID));
-
-        // Assign texture region
-        sprite.set_uv_width(divData->uv.right - divData->uv.left);
-        sprite.set_uv_height(divData->uv.top - divData->uv.bottom);
-        sprite.set_uv_position({ divData->uv.left, divData->uv.bottom });
-
-        // Build the sprite transform
-        gef::Matrix33 finalTransform = gef::Matrix33::kIdentity;
-        finalTransform = skeleton.getBoneTransform(inst.skeleInst.boneList, boneHeapID) * finalTransform; // Apply world
-        finalTransform = skin.getTransform(boneHeapID) * finalTransform; // Apply sprite offset
-        finalTransform = divData->transform * finalTransform; // Apply subtexture offset
-        
-        // TODO: sprite offset and subtexture transforms can be precomputed on skin swap!
-
-        // Render!
-        renderer->DrawSprite(sprite, finalTransform);
-      }
-    }
-  }
-
   UInt SkinnedSkeleton2D::addAnimation(Label name)
   {
     return detailedAnimationData.add(name).second;
@@ -336,7 +276,6 @@ namespace Animation
       }
     }
     animations.clear();
-    currentAnimation = 0;
   }
 
   bool Skeleton2DSkin::bake(const Skeleton2D& skele, const Skeleton2DSlots& slotMap, const Textures::TextureAtlas& atlas)
@@ -379,24 +318,69 @@ namespace Animation
     transform = rotMat * transMat;
   }
 
-  SkinnedSkeleton2D::Instance::Instance() : baseSkeleton{ nullptr }
+  SkinnedSkeleton2D::Instance::Instance() : baseSkeleton{ nullptr }, currentAnimation{ NULL }, currentSkin{ NULL }
   {
 
   }
 
   void SkinnedSkeleton2D::Instance::update(float dt)
   {
-    if (baseSkeleton)
+    if (!baseSkeleton) { return; }
+
+    Skeleton2D::resetPose(skeleInst.boneList);
+    animationPlayer.update(dt);
+
+    for (size_t i = 0; i < skeleInst.baseSkeleton->getBoneCount(); ++i)
     {
-      baseSkeleton->update(*this, dt);
+      // Convert to the optimised bone index
+      if (UInt boneHeapID = baseSkeleton->getSlots().getBoneID(i)) // We don't need to draw the root
+      {
+        // Apply the current animation
+        auto& localPose = Skeleton2D::getLocalPose(skeleInst.boneList, boneHeapID);
+        localPose = localPose + animationPlayer.getCurrentTransform(boneHeapID);
+      }
     }
+
+    Skeleton2D::forwardKinematics(skeleInst.boneList);
   }
 
   void SkinnedSkeleton2D::Instance::render(gef::SpriteRenderer* renderer, const Textures::TextureCollection& textures)
   {
-    if (baseSkeleton)
+    if (!baseSkeleton || !baseSkeleton->isBaked() || !baseSkeleton->getAtlas()) { return; }
+
+    // Hold a sprite with the texture atlas
+    gef::Sprite sprite;
+    if (textures.isBaked())
     {
-      baseSkeleton->render(*this, renderer, textures);
+      sprite.set_texture(textures.getTextureData(baseSkeleton->getAtlas()->getTextureID()));
+    }
+
+    auto& skin = baseSkeleton->getSkin(currentSkin);
+
+    // Traverse the draw list
+    for (size_t i = 0; i < skeleInst.baseSkeleton->getBoneCount(); ++i)
+    {
+      // Convert to the optimised bone index
+      if (UInt boneHeapID = baseSkeleton->getSlots().getBoneID(i)) // We don't need to draw the root
+      {
+        auto divData = baseSkeleton->getAtlas()->getData(skin.getSubtextureID(boneHeapID));
+
+        // Assign texture region
+        sprite.set_uv_width(divData->uv.right - divData->uv.left);
+        sprite.set_uv_height(divData->uv.top - divData->uv.bottom);
+        sprite.set_uv_position({ divData->uv.left, divData->uv.bottom });
+
+        // Build the sprite transform
+        gef::Matrix33 finalTransform = gef::Matrix33::kIdentity;
+        finalTransform = Skeleton2D::getBoneTransform(skeleInst.boneList, boneHeapID) * finalTransform; // Apply world
+        finalTransform = skin.getTransform(boneHeapID) * finalTransform; // Apply sprite offset
+        finalTransform = divData->transform * finalTransform; // Apply subtexture offset
+
+        // TODO: sprite offset and subtexture transforms can be precomputed on skin swap!
+
+        // Render!
+        renderer->DrawSprite(sprite, finalTransform);
+      }
     }
   }
 
