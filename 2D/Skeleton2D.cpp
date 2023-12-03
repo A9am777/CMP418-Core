@@ -3,7 +3,8 @@
 #include <maths/matrix44.h>
 #include <functional>
 
-#include "Skeleton2D.h"
+#include "2D/Skeleton2D.h"
+#include "3D/Skeleton3D.h"
 
 namespace Animation
 {
@@ -382,6 +383,7 @@ namespace Animation
   {
 
   }
+
   void SkinnedSkeleton2D::Instance::update(float dt)
   {
     if (baseSkeleton)

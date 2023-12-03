@@ -1,15 +1,11 @@
 #pragma once
 #include "Animation/BlendTree/BlendNode.h"
+#include "3D/Skeleton3D.h"
 #include <animation/skeleton.h>
 
 namespace gef
 {
   class Animation;
-}
-
-namespace Animation
-{
-  class Skeleton3DInstance;
 }
 
 namespace BlendTree
@@ -155,10 +151,10 @@ namespace BlendTree
       skeleOutClassDescriptor.outputBlueprint = { };
     };
 
-    inline void setSkeletonInstance(Animation::Skeleton3DInstance* skeleInst) { instance = skeleInst; }
+    inline void setSkeletonInstance(Animation::Skeleton3D::Instance* skeleInst) { instance = skeleInst; }
 
     protected:
-    Animation::Skeleton3DInstance* instance;
+    Animation::Skeleton3D::Instance* instance;
 
     virtual void process(const BlendTree* tree, float dt) override;
 

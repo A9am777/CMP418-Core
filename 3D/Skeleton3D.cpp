@@ -7,18 +7,18 @@ namespace bt = BlendTree;
 
 namespace Animation
 {
-  Skeleton3DInstance::Skeleton3DInstance() : baseSkeleton{ nullptr }, instance{ nullptr }, blendTree{nullptr}
+  Skeleton3D::Instance::Instance() : baseSkeleton{ nullptr }, instance{ nullptr }, blendTree{nullptr}
   {
     
   }
 
-  Skeleton3DInstance::~Skeleton3DInstance()
+  Skeleton3D::Instance::~Instance()
   {
     if (blendTree) { delete blendTree; blendTree = nullptr; }
     if (instance) { delete instance; instance = nullptr; }
   }
 
-  void Skeleton3DInstance::initBlendTree()
+  void Skeleton3D::Instance::initBlendTree()
   {
     if (blendTree) { delete blendTree; }
 
@@ -41,32 +41,17 @@ namespace Animation
     blendTree->setBindPose(&instance->bind_pose());
   }
 
-  void Skeleton3DInstance::setSkeleton(const Skeleton3D* newSkeleton)
-  {
-    baseSkeleton = newSkeleton;
-    if (instance) { delete instance; }
-
-    // Instance
-    instance = new gef::SkinnedMeshInstance(*newSkeleton->getSkeleton());
-    instance->set_mesh(newSkeleton->getMesh());
-    {
-      gef::Matrix44 identity;
-      identity.SetIdentity();
-      instance->set_transform(identity);
-    }
-  }
-
-  void Skeleton3DInstance::setWorldTransform(const gef::Matrix44& transform)
+  void Skeleton3D::Instance::setWorldTransform(const gef::Matrix44& transform)
   {
     instance->set_transform(transform);
   }
 
-  void Skeleton3DInstance::setPose(const gef::SkeletonPose& newPose)
+  void Skeleton3D::Instance::setPose(const gef::SkeletonPose& newPose)
   {
     instance->UpdateBoneMatrices(newPose);
   }
 
-  void Skeleton3DInstance::update(float dt)
+  void Skeleton3D::Instance::update(float dt)
   {
     instance->UpdateBoneMatrices(instance->bind_pose());
     if (blendTree)
@@ -85,7 +70,7 @@ namespace Animation
     
   }
 
-  void Skeleton3DInstance::render(gef::Renderer3D* renderer) const
+  void Skeleton3D::Instance::render(gef::Renderer3D* renderer) const
   {
     renderer->DrawSkinnedMesh(*instance, instance->bone_matrices());
   }
@@ -93,6 +78,21 @@ namespace Animation
   Skeleton3D::Skeleton3D() : skeleton{nullptr}, mesh{nullptr}
   {
     
+  }
+
+  void Skeleton3D::bindTo(Skeleton3D::Instance& inst)
+  {
+    inst.baseSkeleton = this;
+    if (inst.instance) { delete inst.instance; }
+
+    // Instance
+    inst.instance = new gef::SkinnedMeshInstance(*skeleton);
+    inst.instance->set_mesh(mesh);
+    {
+      gef::Matrix44 identity;
+      identity.SetIdentity();
+      inst.instance->set_transform(identity);
+    }
   }
 
   UInt Skeleton3D::addAnimation(gef::StringId labelID, const gef::Animation* animation)
