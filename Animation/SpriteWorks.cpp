@@ -55,6 +55,14 @@ namespace Animation
     Animation::FrameSignature frame(time, detailedAnimation.frametime);
 
     UInt regionID = detailedAnimation.bakedStartFrame + frame.major;
+    
+    // Single frame animation edge case
+    if (detailedAnimation.bakedEndFrame - detailedAnimation.bakedStartFrame == 0)
+    {
+      return regionID = detailedAnimation.bakedStartFrame;
+    }
+
+    // Looping animation
     if (regionID >= detailedAnimation.bakedEndFrame)
     {
       // Ensure the frame loops in the valid range
