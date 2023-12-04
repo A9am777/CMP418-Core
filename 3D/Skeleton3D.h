@@ -44,6 +44,10 @@ namespace Animation
       inline const Skeleton3D* getSkeleton() const { return baseSkeleton; }
       inline const gef::SkeletonPose* getBindPose() const { return &instance->bind_pose(); }
 
+      //TEST
+      gef::SkeletonPose* getPose();
+      inline gef::SkinnedMeshInstance* getInstanceMeshUghWhy() { return instance; }
+
       void update(float dt);
       void render(gef::Renderer3D* renderer) const;
 
@@ -56,6 +60,25 @@ namespace Animation
 
       BlendTree::BlendTree* blendTree;
       BlendTree::BlendNodeWPtr blendOutput;
+    };
+
+    class IKController
+    {
+      public:
+      IKController();
+
+      // Resolves the bones this controller will solve for. From effector bone towards a specified root or for a set depth
+      void bind(const Skeleton3D* skeleton, gef::StringId effectorJoint, gef::StringId rootJoint = 0, size_t maxDepth = SNULL);
+
+      // Applies FABRIK from the end effector towards the target for a pose. Returns the number of iterations of the algorithm that occured
+      UInt resolveFABRIK(const gef::Transform& target, const gef::SkeletonPose& bindPose, gef::SkeletonPose& pose, const gef::SkinnedMeshInstance& animatedModel);
+
+      float unreachableTolerance = 7.5f; // The distance threshold to bias against the fast pass for a nicer transition to full extension
+      float reachTolerance = 0.001f; // The distance threshold deemed to terminate the algorithm
+      UInt maxIterations = 25; // Number of passes
+      float effectorLength = 1.f; // Length along the end effector forward to resolve for
+      private:
+      std::vector<int> boneIndices;
     };
 
     Skeleton3D();

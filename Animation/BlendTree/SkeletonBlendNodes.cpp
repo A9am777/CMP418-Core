@@ -19,6 +19,7 @@ namespace BlendTree
     {
       if (auto pose = getInput<gef::SkeletonPose>(0))
       {
+        aaa = pose;
         instance->setPose(*pose);
       }
     }

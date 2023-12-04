@@ -153,6 +153,7 @@ namespace BlendTree
 
     inline void setSkeletonInstance(Animation::Skeleton3D::Instance* skeleInst) { instance = skeleInst; }
 
+    gef::SkeletonPose* aaa = nullptr;
     protected:
     Animation::Skeleton3D::Instance* instance;
 
