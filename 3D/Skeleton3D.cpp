@@ -134,6 +134,8 @@ namespace Animation
   void Skeleton3D::IKController::bind(const Skeleton3D::Instance* skeletonInstance, gef::StringId effectorJoint, gef::StringId rootJoint, size_t maxDepth)
   {
     boneIndices.clear();
+		jointLength.clear();
+		jointLocal.clear();
 
     auto bones = skeletonInstance->getSkeleton()->getSkeleton();
 
@@ -298,18 +300,16 @@ namespace Animation
 				const auto& pos = jointPosition[i];
 				auto& childPos = jointPosition[i + 1];
 
-				gef::Vector4 forward = pos - childPos;
-				forward.Normalise();
-
 				const gef::Matrix44& previousTransform = pose.global_pose()[boneID];
 				gef::Vector4 oldRight = previousTransform.GetRow(1);
 
 				gef::Matrix44 newTransform;
 				setOrientationTowards(newTransform, pos, childPos, oldRight);
 
-				if (i < boneIndices.size() - 2)
+				//if (i < boneIndices.size() - 2)
 				{
 					auto sagsadgs = jointLocal[i + 1];
+					sagsadgs.set_x(sagsadgs.x());
 					sagsadgs.set_y(-sagsadgs.y());
 					sagsadgs.set_z(-sagsadgs.z());
 
@@ -347,13 +347,17 @@ namespace Animation
 		mat.NormaliseRotation();
 	}
 
-	void Skeleton3D::IKController::setOrientationTowards(gef::Matrix44& mat, const gef::Vector4& location, const gef::Vector4& target, const gef::Vector4& biasRight)
+	void Skeleton3D::IKController::setOrientationTowards(gef::Matrix44& mat, const gef::Vector4& location, const gef::Vector4& target, gef::Vector4 biasRight)
 	{
+		biasRight.Normalise();
+
 		// Compose basis
 		gef::Vector4 forward = location - target;
 		forward.Normalise();
 		gef::Vector4 newUp = forward.CrossProduct(biasRight);
+		newUp.Normalise();
 		gef::Vector4 newRight = newUp.CrossProduct(forward);
+		newRight.Normalise();
 
 		// Combine orientation and translation
 		setOrientation(mat, forward, newRight, newUp);
