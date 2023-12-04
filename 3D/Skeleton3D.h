@@ -68,7 +68,7 @@ namespace Animation
       IKController();
 
       // Resolves the bones this controller will solve for. From effector bone towards a specified root or for a set depth
-      void bind(const Skeleton3D* skeleton, gef::StringId effectorJoint, gef::StringId rootJoint = 0, size_t maxDepth = SNULL);
+      void bind(const Skeleton3D::Instance* skeletonInstance, gef::StringId effectorJoint, gef::StringId rootJoint = 0, size_t maxDepth = SNULL);
 
       // Applies FABRIK from the end effector towards the target for a pose. Returns the number of iterations of the algorithm that occured
       UInt resolveFABRIK(const gef::Transform& target, const gef::SkeletonPose& bindPose, gef::SkeletonPose& pose, const gef::SkinnedMeshInstance& animatedModel);
@@ -77,8 +77,18 @@ namespace Animation
       float reachTolerance = 0.001f; // The distance threshold deemed to terminate the algorithm
       UInt maxIterations = 25; // Number of passes
       float effectorLength = 1.f; // Length along the end effector forward to resolve for
+
+      protected:
+      // Composes a matrix from orthogonal basis vectors
+      static void setOrientation(gef::Matrix44& mat, const gef::Vector4& forward, const gef::Vector4& right, const gef::Vector4& up);
+      // Composes a matrix at a location oriented towards a target, with a right vector bias
+      static void setOrientationTowards(gef::Matrix44& mat, const gef::Vector4& location, const gef::Vector4& target, const gef::Vector4& biasRight);
+
       private:
       std::vector<int> boneIndices;
+      std::vector<gef::Vector4> jointLocal; // The local bind position of the joint to its parent bone
+      std::vector<float> jointLength; // The length of the bone connected to each joint (model space)
+      float staticTotalLength; // The precomputed accumulated length of all bones (model space)
     };
 
     Skeleton3D();

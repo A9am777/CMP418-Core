@@ -131,11 +131,11 @@ namespace Animation
 
   }
 
-  void Skeleton3D::IKController::bind(const Skeleton3D* skeleton, gef::StringId effectorJoint, gef::StringId rootJoint, size_t maxDepth)
+  void Skeleton3D::IKController::bind(const Skeleton3D::Instance* skeletonInstance, gef::StringId effectorJoint, gef::StringId rootJoint, size_t maxDepth)
   {
     boneIndices.clear();
 
-    auto bones = skeleton->getSkeleton();
+    auto bones = skeletonInstance->getSkeleton()->getSkeleton();
 
     // Get the end, then cache indices along the chain
     Int32 jointIdx = bones->FindJointIndex(effectorJoint);
@@ -151,35 +151,54 @@ namespace Animation
 
     // Reverse the result to flow from the root
     std::reverse(boneIndices.begin(), boneIndices.end());
+
+		auto bindPose = skeletonInstance->getBindPose();
+
+		// Precompute bone lengths and cache local positions
+		staticTotalLength = .0f;
+		jointLength.resize(boneIndices.size() + 1); // Include the additional end effector on the leaf bone
+		jointLocal.resize(jointLength.size());
+		{
+			auto previousBonePos = bindPose->global_pose()[boneIndices.back()].GetTranslation();
+			for (int i = boneIndices.size() - 1; i >= 0; --i)
+			{
+				int boneID = boneIndices[i];
+
+				jointLocal[i]  = bindPose->local_pose()[boneID].translation();
+
+				auto& pos = bindPose->global_pose()[boneID].GetTranslation();
+				auto& length = jointLength[i] = (pos - previousBonePos).Length();
+
+				staticTotalLength += length;
+				previousBonePos = pos;
+			}
+			jointLength.back() = .0f;
+		}
+
+
   }
 
   UInt Skeleton3D::IKController::resolveFABRIK(const gef::Transform& target, const gef::SkeletonPose& bindPose, gef::SkeletonPose& pose, const gef::SkinnedMeshInstance& animatedModel)
   {
+		// Joint positions with the additional end effector target on the leaf bone
 		std::vector<gef::Vector4> jointPosition;
-		std::vector<float> jointLength;
+		jointPosition.resize(jointLength.size());
 
-		// Joint positions and bone length with the additional target on the leaf bone
-		jointPosition.resize(boneIndices.size() + 1);
-		jointLength.resize(boneIndices.size() + 1);
-		float totalLength = .0f;
+		float totalLength = staticTotalLength;
+		totalLength += jointLength[boneIndices.size() - 1] = effectorLength; // Now include the effector offset
 
 		{
 			// Start with the location off of the leaf bone (just the joint for now)
-			auto previousBonePos = jointPosition.back() = bindPose.global_pose()[boneIndices.back()].GetTranslation();
-			jointLength.back() = .0f;
+			auto previousBonePos = jointPosition.back() = pose.global_pose()[boneIndices.back()].GetTranslation();
+			totalLength += jointLength[boneIndices.size() - 1] = effectorLength;
 
 			for (int i = boneIndices.size() - 1; i >= 0; --i)
 			{
-				Int32 boneID = boneIndices[i];
+				int boneID = boneIndices[i];
 
-				auto& pos = jointPosition[i] = bindPose.global_pose()[boneID].GetTranslation();
-				auto& length = jointLength[i] = (pos - previousBonePos).Length();
-
-				totalLength += length;
-				previousBonePos = pos;
+				jointPosition[i] = pose.global_pose()[boneID].GetTranslation();
 			}
 		}
-		totalLength += jointLength[boneIndices.size() - 1] = effectorLength;
 
 		gef::Vector4 destPos;
 		{
@@ -282,22 +301,23 @@ namespace Animation
 				gef::Vector4 forward = pos - childPos;
 				forward.Normalise();
 
-				const gef::Matrix44& previousTransform = bindPose.global_pose()[boneID];
+				const gef::Matrix44& previousTransform = pose.global_pose()[boneID];
 				gef::Vector4 oldRight = previousTransform.GetRow(1);
 
-				gef::Vector4 newUp = forward.CrossProduct(oldRight);
-				gef::Vector4 newRight = newUp.CrossProduct(forward);
-
 				gef::Matrix44 newTransform;
-				newTransform.SetIdentity();
-				newTransform.SetTranslation(pos);
-				newTransform.SetRow(0, forward);
-				newTransform.set_m(0, 3, 0);
-				newTransform.SetRow(1, newRight);
-				newTransform.set_m(1, 3, 0);
-				newTransform.SetRow(2, newUp);
-				newTransform.set_m(2, 3, 0);
-				newTransform.NormaliseRotation();
+				setOrientationTowards(newTransform, pos, childPos, oldRight);
+
+				if (i < boneIndices.size() - 2)
+				{
+					auto sagsadgs = jointLocal[i + 1];
+					sagsadgs.set_y(-sagsadgs.y());
+					sagsadgs.set_z(-sagsadgs.z());
+
+					gef::Vector4 newTarg = sagsadgs.Transform(newTransform);
+					oldRight = newTransform.GetRow(1);
+
+					setOrientationTowards(newTransform, pos, newTarg, oldRight);
+				}
 
 				// Compute local transform from the parent's inverse
 				{
@@ -315,5 +335,29 @@ namespace Animation
 
 		return iterationCount;
   }
+
+	void Skeleton3D::IKController::setOrientation(gef::Matrix44& mat, const gef::Vector4& forward, const gef::Vector4& right, const gef::Vector4& up)
+	{
+		mat.SetRow(0, forward);
+		mat.set_m(0, 3, 0);
+		mat.SetRow(1, right);
+		mat.set_m(1, 3, 0);
+		mat.SetRow(2, up);
+		mat.set_m(2, 3, 0);
+		mat.NormaliseRotation();
+	}
+
+	void Skeleton3D::IKController::setOrientationTowards(gef::Matrix44& mat, const gef::Vector4& location, const gef::Vector4& target, const gef::Vector4& biasRight)
+	{
+		// Compose basis
+		gef::Vector4 forward = location - target;
+		forward.Normalise();
+		gef::Vector4 newUp = forward.CrossProduct(biasRight);
+		gef::Vector4 newRight = newUp.CrossProduct(forward);
+
+		// Combine orientation and translation
+		setOrientation(mat, forward, newRight, newUp);
+		mat.SetTranslation(location);
+	}
 
 }
