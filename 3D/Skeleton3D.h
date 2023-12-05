@@ -81,8 +81,8 @@ namespace Animation
       protected:
       // Composes a matrix from orthogonal basis vectors
       static void setOrientation(gef::Matrix44& mat, const gef::Vector4& forward, const gef::Vector4& right, const gef::Vector4& up);
-      // Composes a matrix at a location oriented towards a target, with a right vector bias
-      static void setOrientationTowards(gef::Matrix44& mat, const gef::Vector4& location, const gef::Vector4& target, gef::Vector4 biasRight);
+      // Composes a matrix at a location oriented towards a target, with a right vector bias (substituting up for precision)
+      static void setOrientationTowards(gef::Matrix44& mat, const gef::Vector4& location, const gef::Vector4& target, gef::Vector4 biasRight, gef::Vector4 biasUp, bool wacky);
 
       private:
       std::vector<int> boneIndices;

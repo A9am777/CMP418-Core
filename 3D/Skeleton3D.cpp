@@ -301,22 +301,33 @@ namespace Animation
 				auto& childPos = jointPosition[i + 1];
 
 				const gef::Matrix44& previousTransform = pose.global_pose()[boneID];
-				gef::Vector4 oldRight = previousTransform.GetRow(1);
+				gef::Vector4 oldRight = gef::Vector4(1, 0, 0);//previousTransform.GetRow(1);
+				gef::Vector4 oldUp = gef::Vector4(0, 1,0);//previousTransform.GetRow(2);
+				
+				oldRight = previousTransform.GetRow(0);
+				oldUp = previousTransform.GetRow(1);
+
+				auto shdshjtshjsdmn = pose.local_pose()[boneID];
 
 				gef::Matrix44 newTransform;
-				setOrientationTowards(newTransform, pos, childPos, oldRight);
+				setOrientationTowards(newTransform, pos, childPos, oldRight, oldUp, true);
+
+				auto asrhgarhatghre = bindPose.global_pose()[boneID];
+				auto gggggg = pose.skeleton()->joint(boneID).inv_bind_pose;
 
 				//if (i < boneIndices.size() - 2)
 				{
 					auto sagsadgs = jointLocal[i + 1];
 					sagsadgs.set_x(sagsadgs.x());
 					sagsadgs.set_y(-sagsadgs.y());
-					sagsadgs.set_z(-sagsadgs.z());
+					sagsadgs.set_z(sagsadgs.z());
 
 					gef::Vector4 newTarg = sagsadgs.Transform(newTransform);
-					oldRight = newTransform.GetRow(1);
 
-					setOrientationTowards(newTransform, pos, newTarg, oldRight);
+					oldRight = newTransform.GetRow(0);
+					oldUp = newTransform.GetRow(1);
+
+					setOrientationTowards(newTransform, pos, newTarg, oldRight, oldUp, true);
 				}
 
 				// Compute local transform from the parent's inverse
@@ -347,20 +358,46 @@ namespace Animation
 		mat.NormaliseRotation();
 	}
 
-	void Skeleton3D::IKController::setOrientationTowards(gef::Matrix44& mat, const gef::Vector4& location, const gef::Vector4& target, gef::Vector4 biasRight)
+	void Skeleton3D::IKController::setOrientationTowards(gef::Matrix44& mat, const gef::Vector4& location, const gef::Vector4& target, gef::Vector4 biasRight, gef::Vector4 biasUp, bool wacky)
 	{
 		biasRight.Normalise();
+		biasUp.Normalise();
 
 		// Compose basis
-		gef::Vector4 forward = location - target;
+		gef::Vector4 forward = target - location;
+		forward = -forward;
 		forward.Normalise();
-		gef::Vector4 newUp = forward.CrossProduct(biasRight);
-		newUp.Normalise();
-		gef::Vector4 newRight = newUp.CrossProduct(forward);
-		newRight.Normalise();
+
+		gef::Vector4 newUp;
+		gef::Vector4 newRight;
+		//if (forward.DotProduct(biasRight) < forward.DotProduct(biasUp)) // Utilise the best basis vector (smallest affinity with forward)
+		{
+			newUp = forward.CrossProduct(biasRight);
+			newUp.Normalise();
+			newRight = newUp.CrossProduct(forward);
+			newRight.Normalise();
+		}
+		/*else
+		{
+			newRight = biasUp.CrossProduct(forward);
+			newRight.Normalise();
+			newUp = forward.CrossProduct(newRight);
+			newUp.Normalise();
+		}*/
 
 		// Combine orientation and translation
-		setOrientation(mat, forward, newRight, newUp);
+		if (wacky)
+		{
+			//newRight = biasUp.CrossProduct(forward);
+			//newRight.Normalise();
+			//newUp = forward.CrossProduct(newRight);
+			//newUp.Normalise();
+			setOrientation(mat, newRight, newUp, forward);
+		}
+		else
+		{
+			setOrientation(mat, forward, newRight, newUp);
+		}
 		mat.SetTranslation(location);
 	}
 
