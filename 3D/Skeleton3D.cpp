@@ -180,7 +180,7 @@ namespace Animation
 
   }
 
-  UInt Skeleton3D::IKController::resolveFABRIK(const gef::Transform& target, const gef::SkeletonPose& bindPose, gef::SkeletonPose& pose, const gef::SkinnedMeshInstance& animatedModel)
+  UInt Skeleton3D::IKController::resolveFABRIK(const gef::Transform& target, const gef::SkeletonPose& bindPose, gef::SkeletonPose& pose, const gef::SkinnedMeshInstance& animatedModel, bool rightHanded)
   {
 		// Joint positions with the additional end effector target on the leaf bone
 		std::vector<gef::Vector4> jointPosition;
@@ -304,30 +304,25 @@ namespace Animation
 				gef::Vector4 oldRight = gef::Vector4(1, 0, 0);//previousTransform.GetRow(1);
 				gef::Vector4 oldUp = gef::Vector4(0, 1,0);//previousTransform.GetRow(2);
 				
-				oldRight = previousTransform.GetRow(0);
-				oldUp = previousTransform.GetRow(1);
+				oldRight = rightHanded ? previousTransform.GetRow(1) : previousTransform.GetRow(0);
+				oldUp = rightHanded ? previousTransform.GetRow(2) : previousTransform.GetRow(1);
 
 				auto shdshjtshjsdmn = pose.local_pose()[boneID];
 
 				gef::Matrix44 newTransform;
-				setOrientationTowards(newTransform, pos, childPos, oldRight, oldUp, true);
+				setOrientationTowards(newTransform, pos, childPos, oldRight, oldUp, !rightHanded);
 
-				auto asrhgarhatghre = bindPose.global_pose()[boneID];
-				auto gggggg = pose.skeleton()->joint(boneID).inv_bind_pose;
-
-				//if (i < boneIndices.size() - 2)
 				{
 					auto sagsadgs = jointLocal[i + 1];
-					sagsadgs.set_x(sagsadgs.x());
 					sagsadgs.set_y(-sagsadgs.y());
-					sagsadgs.set_z(sagsadgs.z());
+					sagsadgs.set_z(rightHanded ? -sagsadgs.z() : sagsadgs.z());
 
 					gef::Vector4 newTarg = sagsadgs.Transform(newTransform);
 
-					oldRight = newTransform.GetRow(0);
-					oldUp = newTransform.GetRow(1);
+					oldRight = rightHanded ? newTransform.GetRow(1) : newTransform.GetRow(0);
+					oldUp = rightHanded ? newTransform.GetRow(2) : newTransform.GetRow(1);
 
-					setOrientationTowards(newTransform, pos, newTarg, oldRight, oldUp, true);
+					setOrientationTowards(newTransform, pos, newTarg, oldRight, oldUp, !rightHanded);
 				}
 
 				// Compute local transform from the parent's inverse

@@ -71,7 +71,7 @@ namespace Animation
       void bind(const Skeleton3D::Instance* skeletonInstance, gef::StringId effectorJoint, gef::StringId rootJoint = 0, size_t maxDepth = SNULL);
 
       // Applies FABRIK from the end effector towards the target for a pose. Returns the number of iterations of the algorithm that occured
-      UInt resolveFABRIK(const gef::Transform& target, const gef::SkeletonPose& bindPose, gef::SkeletonPose& pose, const gef::SkinnedMeshInstance& animatedModel);
+      UInt resolveFABRIK(const gef::Transform& target, const gef::SkeletonPose& bindPose, gef::SkeletonPose& pose, const gef::SkinnedMeshInstance& animatedModel, bool rightHanded = true);
 
       float unreachableTolerance = 7.5f; // The distance threshold to bias against the fast pass for a nicer transition to full extension
       float reachTolerance = 0.001f; // The distance threshold deemed to terminate the algorithm
