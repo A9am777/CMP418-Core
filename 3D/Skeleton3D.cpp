@@ -182,6 +182,7 @@ namespace Animation
       if (joint.name_id == rootJoint) { break; } // If this is the root, exit
       jointIdx = joint.parent;
     }
+		if (boneIndices.empty()) { return; }
 
     // Reverse the result to flow from the root
     std::reverse(boneIndices.begin(), boneIndices.end());
@@ -215,7 +216,7 @@ namespace Animation
 
   UInt Skeleton3D::IKController::resolveFABRIK(const gef::Transform& target, gef::SkeletonPose& pose)
   {
-		if (!skeletonInstance) { return SNULL; }
+		if (!skeletonInstance || boneIndices.empty()) { return SNULL; }
 
 		// Joint positions with the additional end effector target on the leaf bone
 		std::vector<gef::Vector4> jointPosition;

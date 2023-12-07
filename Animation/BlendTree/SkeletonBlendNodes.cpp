@@ -159,11 +159,51 @@ namespace BlendTree
 
   InverseKineNode::InverseKineNode(Label name) : BlendNode(name, &ikClassDescriptor)
   {
-
+    setOutput(OutResolvedPoseIdx, &pose);
   }
 
   void InverseKineNode::process(const BlendTree* tree, float dt)
   {
+    // Fetch inputs
+    auto basePoseRef = getInput<const gef::SkeletonPose>(InBasePoseIdx);
+    auto resolveRef = getInput<bool>(InResolveIdx);
+    
+    // Mirror the input base pose if not resolving IK
+    if (resolveRef && !*resolveRef)
+    {
+      setOutput(OutResolvedPoseIdx, basePoseRef);
+      return;
+    }
+    setOutput(OutResolvedPoseIdx, &pose);
+    
+    auto targetRef = getInput<const gef::Transform>(InTargetIdx);
+    auto effectorLocalRef = getInput<const gef::Transform>(InEffectorLocalIdx);
+    auto effectorJointNameRef = getInput<const std::string>(InEffectorJointIdx);
+    auto rootJointNameRef = getInput<const std::string>(InRootJointIdx);
+    auto chainDepthRef = getInput<int>(InChainDepthIdx);
+    auto rightHandedRef = getInput<bool>(InRightHandedIdx);
+    
+    auto skele = tree->getInstanceContext();
+    
+    // Copy over the relevant pose
+    pose = basePoseRef ? *basePoseRef : *tree->getBindPose();
 
+    // Build the IK controller (could be cached)
+    Animation::Skeleton3D::IKController ikController;
+    ikController.setInstance(skele);
+    ikController.setEffector(effectorLocalRef ? effectorLocalRef->translation() : gef::Vector4(1.f, .0f, .0f));
+    ikController.rightHanded = rightHandedRef ? *rightHandedRef : true; // Important!!!
+
+    // Cache the bone chain (could be lazily cached)
+    ikController.bind(
+      effectorJointNameRef ? gef::GetStringId(*effectorJointNameRef) : NULL,
+      rootJointNameRef ? gef::GetStringId(*rootJointNameRef) : NULL,
+      chainDepthRef ? *chainDepthRef : SNULL
+    );
+
+    // Run FABRIK
+    gef::Matrix44 identityMat;
+    identityMat.SetIdentity();
+    ikController.resolveFABRIK(targetRef ? *targetRef : gef::Transform(identityMat), pose);
   }
 }

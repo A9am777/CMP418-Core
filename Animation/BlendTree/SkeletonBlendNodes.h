@@ -138,7 +138,7 @@ namespace BlendTree
     static NodeClassMeta clipClassDescriptor;
   };
 
-  // Applies FABRIK to a pose
+  // Applies FABRIK to a pose provided a 
   class InverseKineNode : public BlendNode
   {
     public:
@@ -149,10 +149,12 @@ namespace BlendTree
       ikClassDescriptor.className = "IK";
       ikClassDescriptor.inputBlueprint = {
         { "BasePose", Param_Pose },
+        { "Target", Param_Transform },
+        { "EffectorLocal", Param_Transform },
         { "EffectorJoint", Param_String },
         { "RootJoint", Param_String },
         { "ChainDepth", Param_Int },
-        { "Playing", Param_Bool },
+        { "RightHanded", Param_Bool },
         { "Resolve", Param_Bool }
       };
       ikClassDescriptor.outputBlueprint = { { "ResolvedPose", Param_Pose } };
@@ -161,10 +163,12 @@ namespace BlendTree
     enum InputIdx
     {
       InBasePoseIdx = 0,
-      InStartTimeIdx,
-      InProgressionIdx,
-      InRateIdx,
-      InPlayingIdx,
+      InTargetIdx,
+      InEffectorLocalIdx,
+      InEffectorJointIdx,
+      InRootJointIdx,
+      InChainDepthIdx,
+      InRightHandedIdx,
       InResolveIdx
     };
 
