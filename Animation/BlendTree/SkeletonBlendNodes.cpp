@@ -16,11 +16,10 @@ namespace BlendTree
 
   void SkeletonOutputNode::process(const BlendTree* tree, float dt)
   {
-    if (instance)
+    if (auto instance = const_cast<Animation::Skeleton3D::Instance*>(tree->getInstanceContext()))
     {
       if (auto pose = getInput<gef::SkeletonPose>(0))
       {
-        aaa = pose;
         instance->setPose(*pose);
       }
     }
@@ -157,9 +156,10 @@ namespace BlendTree
     bilinearPose.Linear2PoseBlend(linearPose, bilinearPose, blendParams.y);
   }
 
-  InverseKineNode::InverseKineNode(Label name) : BlendNode(name, &ikClassDescriptor)
+  InverseKineNode::InverseKineNode(Label name) : BlendNode(name, &ikClassDescriptor), previousIterations{ -1 }
   {
     setOutput(OutResolvedPoseIdx, &pose);
+    setOutput(OutIterationsResolvedIdx, &previousIterations);
   }
 
   void InverseKineNode::process(const BlendTree* tree, float dt)
@@ -182,7 +182,10 @@ namespace BlendTree
     auto rootJointNameRef = getInput<const std::string>(InRootJointIdx);
     auto chainDepthRef = getInput<int>(InChainDepthIdx);
     auto rightHandedRef = getInput<bool>(InRightHandedIdx);
-    
+    auto maxIterationsRef = getInput<int>(InMaxIterationsIdx);
+    auto reachToleranceRef = getInput<float>(InReachToleranceIdx);
+    auto unreachToleranceRef = getInput<float>(InUnreachableToleranceIdx);
+
     auto skele = tree->getInstanceContext();
     
     // Copy over the relevant pose
@@ -191,8 +194,11 @@ namespace BlendTree
     // Build the IK controller (could be cached)
     Animation::Skeleton3D::IKController ikController;
     ikController.setInstance(skele);
-    ikController.setEffector(effectorLocalRef ? effectorLocalRef->translation() : gef::Vector4(1.f, .0f, .0f));
+    ikController.setEffector(effectorLocalRef ? effectorLocalRef->translation() : gef::Vector4(-1.f, .0f, .0f));
     ikController.rightHanded = rightHandedRef ? *rightHandedRef : true; // Important!!!
+    if (maxIterationsRef) { ikController.maxIterations = UInt(*maxIterationsRef); }
+    if (reachToleranceRef) { ikController.reachTolerance = *reachToleranceRef; }
+    if (unreachToleranceRef) { ikController.unreachableTolerance = *unreachToleranceRef; }
 
     // Cache the bone chain (could be lazily cached)
     ikController.bind(
@@ -204,6 +210,6 @@ namespace BlendTree
     // Run FABRIK
     gef::Matrix44 identityMat;
     identityMat.SetIdentity();
-    ikController.resolveFABRIK(targetRef ? *targetRef : gef::Transform(identityMat), pose);
+    previousIterations = ikController.resolveFABRIK(targetRef ? *targetRef : gef::Transform(identityMat), pose);
   }
 }

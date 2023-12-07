@@ -84,6 +84,9 @@ namespace BlendTree
     inline const gef::Transform* getTransform(gef::StringId nameID) const  { return (gef::Transform*)getGlobalVariable(Param_Transform, nameID); }
     inline const gef::Transform* getTransform(Label name) const            { return (gef::Transform*)getGlobalVariable(Param_Transform, name); }
 
+    inline void setForceUpdateFlag(bool flag) { forceVisitNodes = flag; }
+    inline bool isUpdateAllForced() const { return forceVisitNodes; }
+    inline void setTraversalCacheFlag(bool flag) { useTraversalCache = flag; }
     inline bool hasTraversalCache() const { return useTraversalCache; }
     inline bool getUpdateParity() const { return updateParity; }
 
@@ -130,6 +133,7 @@ namespace BlendTree
     BlendNodePtr outputNode;
     bool updateParity; // Distinguishes between odd and even frames so nodes can automatically identify if they have been visited without multiple passes
     bool useTraversalCache; // Whether to optimise node update traversal
+    bool forceVisitNodes; // Whether to forcibly update all nodes
     std::list<BlendNodeWPtr> cachedNodeTraversal; // Caches the order of previously visited nodes to speed up next frames order
 
     const Animation::Skeleton3D::Instance* instanceContext;

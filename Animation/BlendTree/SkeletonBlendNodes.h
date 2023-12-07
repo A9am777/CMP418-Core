@@ -155,9 +155,13 @@ namespace BlendTree
         { "RootJoint", Param_String },
         { "ChainDepth", Param_Int },
         { "RightHanded", Param_Bool },
-        { "Resolve", Param_Bool }
+        { "Resolve", Param_Bool },
+        // Advanced properties
+        { "MaxIterations", Param_Int },
+        { "ReachTolerance", Param_Float },
+        { "UnreachableTolerance", Param_Float }
       };
-      ikClassDescriptor.outputBlueprint = { { "ResolvedPose", Param_Pose } };
+      ikClassDescriptor.outputBlueprint = { { "ResolvedPose", Param_Pose }, { "IterationsResolved", Param_Int } };
     };
 
     enum InputIdx
@@ -169,16 +173,21 @@ namespace BlendTree
       InRootJointIdx,
       InChainDepthIdx,
       InRightHandedIdx,
-      InResolveIdx
+      InResolveIdx,
+      InMaxIterationsIdx,
+      InReachToleranceIdx,
+      InUnreachableToleranceIdx,
     };
 
     enum OutputIdx
     {
-      OutResolvedPoseIdx = 0
+      OutResolvedPoseIdx = 0,
+      OutIterationsResolvedIdx
     };
 
     protected:
     gef::SkeletonPose pose;
+    int previousIterations; // Tracks the iterations FABRIK undergone
 
     virtual void process(const BlendTree* tree, float dt) override;
 
@@ -189,7 +198,7 @@ namespace BlendTree
   class SkeletonOutputNode : public BlendNode
   {
     public:
-    SkeletonOutputNode(Label name) : BlendNode(name, &skeleOutClassDescriptor), instance{ nullptr } {  }
+    SkeletonOutputNode(Label name) : BlendNode(name, &skeleOutClassDescriptor) {  }
 
     static void registerClass()
     {
@@ -198,12 +207,7 @@ namespace BlendTree
       skeleOutClassDescriptor.outputBlueprint = { };
     };
 
-    inline void setSkeletonInstance(Animation::Skeleton3D::Instance* skeleInst) { instance = skeleInst; }
-
-    gef::SkeletonPose* aaa = nullptr;
     protected:
-    Animation::Skeleton3D::Instance* instance;
-
     virtual void process(const BlendTree* tree, float dt) override;
 
     private:

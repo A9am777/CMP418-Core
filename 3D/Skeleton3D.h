@@ -44,10 +44,6 @@ namespace Animation
       inline const Skeleton3D* getSkeleton() const { return baseSkeleton; }
       inline const gef::SkeletonPose* getBindPose() const { return &instance->bind_pose(); }
 
-      //TEST
-      gef::SkeletonPose* getPose();
-      inline gef::SkinnedMeshInstance* getInstanceMeshUghWhy() { return instance; }
-
       void update(float dt);
       void render(gef::Renderer3D* renderer) const;
 

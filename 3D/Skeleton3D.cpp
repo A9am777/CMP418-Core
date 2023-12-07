@@ -29,7 +29,6 @@ namespace Animation
     blendTree->startRenderContext("Simple.json");
     {
       auto blendOutputNodeInterim = new bt::SkeletonOutputNode("Output");
-      blendOutputNodeInterim->setSkeletonInstance(this);
       blendOutput = bt::BlendNodeWPtr(blendTree->setOutputNode(blendOutputNodeInterim));
     }
 
@@ -53,18 +52,6 @@ namespace Animation
   {
     instance->UpdateBoneMatrices(newPose);
   }
-
-	gef::SkeletonPose* Skeleton3D::Instance::getPose()
-	{
-		if (auto outputBlend = blendOutput.lock())
-		{
-			if (auto a = dynamic_cast<bt::SkeletonOutputNode*>(outputBlend.get()))
-			{
-				return a->aaa;
-			}
-		}
-		return nullptr;
-	}
 
 	void Skeleton3D::Instance::update(float dt)
   {
