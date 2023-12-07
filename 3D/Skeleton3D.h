@@ -67,28 +67,35 @@ namespace Animation
       public:
       IKController();
 
+      void setInstance(const Skeleton3D::Instance* newInst);
+      void setEffector(const gef::Vector4& local); // The effector in local space of the final bone
+
       // Resolves the bones this controller will solve for. From effector bone towards a specified root or for a set depth
-      void bind(const Skeleton3D::Instance* skeletonInstance, gef::StringId effectorJoint, gef::StringId rootJoint = 0, size_t maxDepth = SNULL);
+      void bind(gef::StringId effectorJoint, gef::StringId rootJoint = 0, size_t maxDepth = SNULL);
 
       // Applies FABRIK from the end effector towards the target for a pose. Returns the number of iterations of the algorithm that occured
-      UInt resolveFABRIK(const gef::Transform& target, const gef::SkeletonPose& bindPose, gef::SkeletonPose& pose, const gef::SkinnedMeshInstance& animatedModel, bool rightHanded = true);
+      UInt resolveFABRIK(const gef::Transform& target, gef::SkeletonPose& pose);
 
-      float unreachableTolerance = 7.5f; // The distance threshold to bias against the fast pass for a nicer transition to full extension
-      float reachTolerance = 0.001f; // The distance threshold deemed to terminate the algorithm
-      UInt maxIterations = 25; // Number of passes
-      float effectorLength = 1.f; // Length along the end effector forward to resolve for
+      float unreachableTolerance; // The distance threshold to bias against the fast pass for a nicer transition to full extension
+      float reachTolerance; // The distance threshold deemed to terminate the algorithm
+      UInt maxIterations; // Number of passes
+      bool rightHanded = true; // Denotes whether to solve for a right handed or left handed coordinate system. A bit strange, but the skeletal visual data flips at points
 
       protected:
       // Composes a matrix from orthogonal basis vectors
       static void setOrientation(gef::Matrix44& mat, const gef::Vector4& forward, const gef::Vector4& right, const gef::Vector4& up);
-      // Composes a matrix at a location oriented towards a target, with a right vector bias (substituting up for precision)
-      static void setOrientationTowards(gef::Matrix44& mat, const gef::Vector4& location, const gef::Vector4& target, gef::Vector4 biasRight, gef::Vector4 biasUp, bool wacky);
+      // Composes a matrix at a location oriented towards a target, with a right vector bias (can collapse rarely)
+      static void setOrientationTowards(gef::Matrix44& mat, const gef::Vector4& location, const gef::Vector4& target, gef::Vector4 biasRight, bool rightHanded = true);
 
       private:
-      std::vector<int> boneIndices;
+      const Skeleton3D::Instance* skeletonInstance; // The instance this controller is operating on
+
+      std::vector<int> boneIndices; // Ordering of bones to iterate over
       std::vector<gef::Vector4> jointLocal; // The local bind position of the joint to its parent bone
       std::vector<float> jointLength; // The length of the bone connected to each joint (model space)
       float staticTotalLength; // The precomputed accumulated length of all bones (model space)
+
+      float effectorLength; // Length to the end effector to resolve for
     };
 
     Skeleton3D();

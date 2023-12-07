@@ -41,7 +41,7 @@ namespace Animation
       }
     }
 
-    blendTree->setBindPose(&instance->bind_pose());
+    blendTree->setInstanceContext(this);
   }
 
   void Skeleton3D::Instance::setWorldTransform(const gef::Matrix44& transform)
@@ -126,13 +126,45 @@ namespace Animation
     return animations.getID(labelID);
   }
 
-  Skeleton3D::IKController::IKController() : unreachableTolerance{ 7.5f }, reachTolerance{ 0.001f }, maxIterations{ 25 }, effectorLength{ 1.f }
+	Skeleton3D::IKController::IKController() : unreachableTolerance{ 7.5f }, reachTolerance{ 0.001f }, maxIterations{ 25 }, effectorLength{ .0f }, rightHanded{ true }, skeletonInstance{ nullptr }, staticTotalLength{.0f}
   {
 
   }
 
-  void Skeleton3D::IKController::bind(const Skeleton3D::Instance* skeletonInstance, gef::StringId effectorJoint, gef::StringId rootJoint, size_t maxDepth)
+	void Skeleton3D::IKController::setInstance(const Skeleton3D::Instance* newInst)
+	{
+		skeletonInstance = newInst;
+
+		boneIndices.clear();
+		jointLength.clear();
+		jointLocal.clear();
+		effectorLength = .0f;
+		staticTotalLength = .0f;
+	}
+
+	void Skeleton3D::IKController::setEffector(const gef::Vector4& local)
+	{
+		if (!skeletonInstance) { return; }
+
+		if (boneIndices.empty())
+		{
+			jointLocal.push_back(local);
+			return;
+		}
+		jointLocal.back() = local;
+
+		// Resolve the bone length
+		auto bindPose = skeletonInstance->getBindPose();
+		auto& endJointGlobal = bindPose->global_pose()[boneIndices.back()];
+		auto effectorPos = local.Transform(endJointGlobal);
+		jointLength[boneIndices.size() - 1] = effectorLength = (effectorPos - endJointGlobal.GetTranslation()).Length();
+	}
+
+  void Skeleton3D::IKController::bind(gef::StringId effectorJoint, gef::StringId rootJoint, size_t maxDepth)
   {
+		if (!skeletonInstance) { return; }
+
+		gef::Vector4 priorEndEffectorLocal = jointLocal.empty() ? gef::Vector4::kZero : jointLocal.back();
     boneIndices.clear();
 		jointLength.clear();
 		jointLocal.clear();
@@ -177,11 +209,14 @@ namespace Animation
 			jointLength.back() = .0f;
 		}
 
-
+		// Reset the effector
+		setEffector(priorEndEffectorLocal);
   }
 
-  UInt Skeleton3D::IKController::resolveFABRIK(const gef::Transform& target, const gef::SkeletonPose& bindPose, gef::SkeletonPose& pose, const gef::SkinnedMeshInstance& animatedModel, bool rightHanded)
+  UInt Skeleton3D::IKController::resolveFABRIK(const gef::Transform& target, gef::SkeletonPose& pose)
   {
+		if (!skeletonInstance) { return SNULL; }
+
 		// Joint positions with the additional end effector target on the leaf bone
 		std::vector<gef::Vector4> jointPosition;
 		jointPosition.resize(jointLength.size());
@@ -202,14 +237,16 @@ namespace Animation
 			}
 		}
 
+		// Transform the target position into model space
 		gef::Vector4 destPos;
 		{
 			gef::Matrix44 worldToModelTransform;
-			worldToModelTransform.Inverse(animatedModel.transform());
+			worldToModelTransform.Inverse(skeletonInstance->instance->transform());
 
 			destPos = target.translation().Transform(worldToModelTransform);
 		}
 
+		// Set up the first pass
 		int iterationCount = 0;
 		float reachDistance = (destPos - jointPosition[0]).Length();
 		bool unreachable = reachDistance >= totalLength + unreachableTolerance;
@@ -294,38 +331,38 @@ namespace Animation
 				}
 			}
 
+			// Lets set each joint transform then!
 			for (int i = 0; i < boneIndices.size(); ++i)
 			{
 				Int32 boneID = boneIndices[i];
 				const auto& pos = jointPosition[i];
 				auto& childPos = jointPosition[i + 1];
 
+				// Get the prior coordinate space (for twisting)
 				const gef::Matrix44& previousTransform = pose.global_pose()[boneID];
-				gef::Vector4 oldRight = gef::Vector4(1, 0, 0);//previousTransform.GetRow(1);
-				gef::Vector4 oldUp = gef::Vector4(0, 1,0);//previousTransform.GetRow(2);
-				
-				oldRight = rightHanded ? previousTransform.GetRow(1) : previousTransform.GetRow(0);
-				oldUp = rightHanded ? previousTransform.GetRow(2) : previousTransform.GetRow(1);
+				gef::Vector4 oldRight = rightHanded ? previousTransform.GetRow(1) : previousTransform.GetRow(0);
 
-				auto shdshjtshjsdmn = pose.local_pose()[boneID];
-
+				// Orient from the parent towards the child...
 				gef::Matrix44 newTransform;
-				setOrientationTowards(newTransform, pos, childPos, oldRight, oldUp, !rightHanded);
-
+				setOrientationTowards(newTransform, pos, childPos, oldRight, rightHanded);
+				
+				// Oops, does not account for the child's local offset
+				// Shift the target and try again
 				{
-					auto sagsadgs = jointLocal[i + 1];
-					sagsadgs.set_y(-sagsadgs.y());
-					sagsadgs.set_z(rightHanded ? -sagsadgs.z() : sagsadgs.z());
+					auto& childLocal = jointLocal[i + 1];
+					childLocal.set_y(rightHanded && childLocal.x() > 0 ? childLocal.y() : -childLocal.y());
+					childLocal.set_z(rightHanded ? -childLocal.z() : childLocal.z());
 
-					gef::Vector4 newTarg = sagsadgs.Transform(newTransform);
+					gef::Vector4 alteredTarget = childLocal.Transform(newTransform);
 
+					// Keep within the resolved coordinate system
 					oldRight = rightHanded ? newTransform.GetRow(1) : newTransform.GetRow(0);
-					oldUp = rightHanded ? newTransform.GetRow(2) : newTransform.GetRow(1);
 
-					setOrientationTowards(newTransform, pos, newTarg, oldRight, oldUp, !rightHanded);
+					// For real this time
+					setOrientationTowards(newTransform, pos, alteredTarget, oldRight, rightHanded);
 				}
 
-				// Compute local transform from the parent's inverse
+				// Finally, compute local transform from the parent's inverse
 				{
 					gef::Matrix44 parentInv;
 					parentInv.Inverse(priorTransform);
@@ -353,10 +390,9 @@ namespace Animation
 		mat.NormaliseRotation();
 	}
 
-	void Skeleton3D::IKController::setOrientationTowards(gef::Matrix44& mat, const gef::Vector4& location, const gef::Vector4& target, gef::Vector4 biasRight, gef::Vector4 biasUp, bool wacky)
+	void Skeleton3D::IKController::setOrientationTowards(gef::Matrix44& mat, const gef::Vector4& location, const gef::Vector4& target, gef::Vector4 biasRight, bool rightHanded)
 	{
 		biasRight.Normalise();
-		biasUp.Normalise();
 
 		// Compose basis
 		gef::Vector4 forward = target - location;
@@ -365,33 +401,20 @@ namespace Animation
 
 		gef::Vector4 newUp;
 		gef::Vector4 newRight;
-		//if (forward.DotProduct(biasRight) < forward.DotProduct(biasUp)) // Utilise the best basis vector (smallest affinity with forward)
-		{
-			newUp = forward.CrossProduct(biasRight);
-			newUp.Normalise();
-			newRight = newUp.CrossProduct(forward);
-			newRight.Normalise();
-		}
-		/*else
-		{
-			newRight = biasUp.CrossProduct(forward);
-			newRight.Normalise();
-			newUp = forward.CrossProduct(newRight);
-			newUp.Normalise();
-		}*/
+
+		newUp = forward.CrossProduct(biasRight);
+		newUp.Normalise();
+		newRight = newUp.CrossProduct(forward);
+		newRight.Normalise();
 
 		// Combine orientation and translation
-		if (wacky)
+		if (rightHanded)
 		{
-			//newRight = biasUp.CrossProduct(forward);
-			//newRight.Normalise();
-			//newUp = forward.CrossProduct(newRight);
-			//newUp.Normalise();
-			setOrientation(mat, newRight, newUp, forward);
+			setOrientation(mat, forward, newRight, newUp);
 		}
 		else
 		{
-			setOrientation(mat, forward, newRight, newUp);
+			setOrientation(mat, newRight, newUp, forward);
 		}
 		mat.SetTranslation(location);
 	}

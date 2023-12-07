@@ -6,6 +6,7 @@
 
 #include <maths/vector2.h>
 #include <animation/animation.h>
+#include "3D/Skeleton3D.h"
 
 #include "BlendNode.h"
 
@@ -47,8 +48,9 @@ namespace BlendTree
     BlendNodePtr removeNode(Label name);
     BlendNodePtr removeNode(gef::StringId nameID);
 
-    inline void setBindPose(const gef::SkeletonPose* pose) { bindPoseContext = pose; }
-    inline const gef::SkeletonPose* getBindPose() const { return bindPoseContext; }
+    inline void setInstanceContext(const Animation::Skeleton3D::Instance* inst) { instanceContext = inst; }
+    inline const Animation::Skeleton3D::Instance* getInstanceContext() const { return instanceContext; }
+    inline const gef::SkeletonPose* getBindPose() const { return instanceContext->getBindPose(); }
 
     // Global variable setters
     inline void setReference(gef::StringId nameID, const bool* ref)            { setGlobalVariable(Param_Bool, nameID, ref); }
@@ -126,7 +128,6 @@ namespace BlendTree
     bool useTraversalCache; // Whether to optimise node update traversal
     std::list<BlendNodeWPtr> cachedNodeTraversal; // Caches the order of previously visited nodes to speed up next frames order
 
-    // Due to bad gef design
-    const gef::SkeletonPose* bindPoseContext;
+    const Animation::Skeleton3D::Instance* instanceContext;
   };
 }
