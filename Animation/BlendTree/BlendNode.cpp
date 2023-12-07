@@ -219,8 +219,8 @@ namespace BlendTree
     ImColor(0xFFBC4B51),
     ImColor(0xFF5B8E7D),
     ImColor(0xFF102E4A),
-    ImColor(0xFF5887FF)
-    //ImColor(0xFFE0B1CB)
+    ImColor(0xFF5887FF),
+    ImColor(0xFFE0B1CB)
     };
 
     return colourOptions[colourIndex];

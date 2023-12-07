@@ -29,6 +29,7 @@ namespace BlendTree
     IntGetterNode::registerClass();
     StringGetterNode::registerClass();
     AnimationGetterNode::registerClass();
+    TransformGetterNode::registerClass();
     
     // Setters
     BoolSetterNode::registerClass();
@@ -36,6 +37,7 @@ namespace BlendTree
     Vector2SetterNode::registerClass();
     IntSetterNode::registerClass();
     StringSetterNode::registerClass();
+    TransformSetterNode::registerClass();
 
     // Debuggers
     BoolDebugNode::registerClass();
@@ -44,11 +46,13 @@ namespace BlendTree
     IntDebugNode::registerClass();
     StringDebugNode::registerClass();
     AnimationDebugNode::registerClass();
+    TransformDebugNode::registerClass();
 
     // Blend nodes
     ClipNode::registerClass();
     BinaryInterpolatorNode::registerClass();
     QuadInterpolatorNode::registerClass();
+    InverseKineNode::registerClass();
 
     // Output
     SkeletonOutputNode::registerClass();
@@ -493,6 +497,7 @@ namespace BlendTree
     PushAbstractNode(Int, GetterNode, Get);
     PushAbstractNode(String, GetterNode, Get);
     PushAbstractNode(Animation, GetterNode, Get);
+    PushAbstractNode(Transform, GetterNode, Get);
 
     // Setters
     PushAbstractNode(Bool, SetterNode, Set);
@@ -500,6 +505,7 @@ namespace BlendTree
     PushAbstractNode(Vector2, SetterNode, Set);
     PushAbstractNode(Int, SetterNode, Set);
     PushAbstractNode(String, SetterNode, Set);
+    PushAbstractNode(Transform, SetterNode, Set);
 
     // Debuggers
     PushAbstractNode(Bool, DebugNode, Debug);
@@ -508,6 +514,7 @@ namespace BlendTree
     PushAbstractNode(Int, DebugNode, Debug);
     PushAbstractNode(String, DebugNode, Debug);
     PushAbstractNode(Animation, DebugNode, Debug);
+    PushAbstractNode(Transform, DebugNode, Debug);
 
     #undef PushAbstractNode
 
@@ -518,6 +525,7 @@ namespace BlendTree
     PushVanillaNode(ClipNode, SkeleClip);
     PushVanillaNode(BinaryInterpolatorNode, BinaryInterp);
     PushVanillaNode(QuadInterpolatorNode, QuadInterp);
+    PushVanillaNode(InverseKineNode, IK);
 
     // Output
     //SkeletonOutputNode::registerClass();

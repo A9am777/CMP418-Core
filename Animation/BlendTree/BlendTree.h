@@ -65,6 +65,8 @@ namespace BlendTree
     inline void setReference(Label name, const std::string* ref)               { setGlobalVariable(Param_String, name, ref); }
     inline void setReference(gef::StringId nameID, const gef::Animation* ref)  { setGlobalVariable(Param_Animation, nameID, ref); }
     inline void setReference(Label name, const gef::Animation* ref)            { setGlobalVariable(Param_Animation, name, ref); }
+    inline void setReference(gef::StringId nameID, const gef::Transform* ref)  { setGlobalVariable(Param_Transform, nameID, ref); }
+    inline void setReference(Label name, const gef::Transform* ref)            { setGlobalVariable(Param_Transform, name, ref); }
 
     // Global variable getters
     inline const bool* getBool(gef::StringId nameID) const                 { return (bool*)getGlobalVariable(Param_Bool, nameID); }
@@ -79,6 +81,8 @@ namespace BlendTree
     inline const std::string* getString(Label name) const                  { return (std::string*)getGlobalVariable(Param_String, name); }
     inline const gef::Animation* getAnimation(gef::StringId nameID) const  { return (gef::Animation*)getGlobalVariable(Param_Animation, nameID); }
     inline const gef::Animation* getAnimation(Label name) const            { return (gef::Animation*)getGlobalVariable(Param_Animation, name); }
+    inline const gef::Transform* getTransform(gef::StringId nameID) const  { return (gef::Transform*)getGlobalVariable(Param_Transform, nameID); }
+    inline const gef::Transform* getTransform(Label name) const            { return (gef::Transform*)getGlobalVariable(Param_Transform, name); }
 
     inline bool hasTraversalCache() const { return useTraversalCache; }
     inline bool getUpdateParity() const { return updateParity; }

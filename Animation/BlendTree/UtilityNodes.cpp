@@ -1,3 +1,4 @@
+#include <maths/transform.h>
 #include "Animation/BlendTree/UtilityNodes.h"
 
 #define IMGUI_DEFINE_MATH_OPERATORS
@@ -42,6 +43,7 @@ namespace BlendTree
   ImplementGetterNode(Int);
   ImplementGetterNode(String);
   ImplementGetterNode(Animation);
+  ImplementGetterNode(Transform);
 
   #define ImplementSetterNode(Typename) NodeClassMeta Typename##SetterNode::set##Typename##ClassDescriptor;
 
@@ -50,6 +52,7 @@ namespace BlendTree
   ImplementSetterNode(Vector2);
   ImplementSetterNode(Int);
   ImplementSetterNode(String);
+  ImplementSetterNode(Transform);
 
   void BoolSetterNode::render()
   {
@@ -118,6 +121,25 @@ namespace BlendTree
     builder.End();
   }
 
+  void TransformSetterNode::render()
+  {
+    ne::Utilities::BlueprintNodeBuilder builder;
+
+    builder.Begin(imguiPinStart);
+    renderStandardHeader(builder);
+    ImGui::PushItemWidth(350.0f);
+
+    gef::Vector4 translation = nodeValue.translation();
+    float translationArr[3] = { translation.x(), translation.y(), translation.z() };
+    ImGui::DragFloat3("(Translation)", translationArr, .01f);
+    nodeValue.set_translation(gef::Vector4(translationArr[0], translationArr[1], translationArr[2]));
+
+    ImGui::PopItemWidth();
+    builder.Middle();
+    renderStandardOutputPins(builder);
+    builder.End();
+  }
+
   #define ImplementDebugNode(Typename) NodeClassMeta Typename##DebugNode::debug##Typename##ClassDescriptor;\
   void Typename##DebugNode::process(const BlendTree* tree, float dt)\
   {\
@@ -130,6 +152,7 @@ namespace BlendTree
   ImplementDebugNode(Int);
   ImplementDebugNode(String);
   ImplementDebugNode(Animation);
+  ImplementDebugNode(Transform);
 
   void BoolDebugNode::render()
   {
@@ -240,6 +263,25 @@ namespace BlendTree
       auto animation = *reinterpret_cast<gef::Animation*>(outputs[0]);
       ImGui::Text("Duration: %f", animation.duration());
       ImGui::Text("Key count: %u", animation.anim_nodes().size());
+    }
+    builder.End();
+  }
+
+  void TransformDebugNode::render()
+  {
+    ne::Utilities::BlueprintNodeBuilder builder;
+    builder.Begin(imguiPinStart);
+    renderStandardHeader(builder);
+    renderStandardInputPins(builder);
+    builder.Middle();
+    renderStandardOutputPins(builder);
+    ImGui::Text(outputs[0] ? "Reference: good" : "Reference: bad");
+    if (outputs[0])
+    {
+      auto transform = *reinterpret_cast<gef::Transform*>(outputs[0]);
+      ImGui::Text("Translation: {%f, %f, %f}", transform.translation().x(), transform.translation().y(), transform.translation().z());
+      ImGui::Text("Quaternion: {%f, %f, %f, %f, %f}", transform.rotation().x, transform.rotation().y, transform.rotation().z, transform.rotation().w);
+      ImGui::Text("Scale: {%f, %f, %f, %f}", transform.scale().x(), transform.scale().y(), transform.scale().z());
     }
     builder.End();
   }

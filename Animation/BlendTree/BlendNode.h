@@ -35,6 +35,7 @@ namespace BlendTree
     Param_String,
     Param_Animation,
     Param_Pose,
+    Param_Transform,
     Param_COUNT
   };
 
@@ -49,6 +50,7 @@ namespace BlendTree
       case Param_String: return "String";
       case Param_Animation: return "Animation";
       case Param_Pose: return "Pose";
+      case Param_Transform: return "Transform";
     }
   }
 

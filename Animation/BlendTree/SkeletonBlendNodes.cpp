@@ -11,6 +11,7 @@ namespace BlendTree
   NodeClassMeta BinaryInterpolatorNode::binaryInterpClassDescriptor;
   NodeClassMeta QuadInterpolatorNode::quadInterpClassDescriptor;
   NodeClassMeta ClipNode::clipClassDescriptor;
+  NodeClassMeta InverseKineNode::ikClassDescriptor;
   NodeClassMeta SkeletonOutputNode::skeleOutClassDescriptor;
 
   void SkeletonOutputNode::process(const BlendTree* tree, float dt)
@@ -156,4 +157,13 @@ namespace BlendTree
     bilinearPose.Linear2PoseBlend(linearPose, bilinearPose, blendParams.y);
   }
 
+  InverseKineNode::InverseKineNode(Label name) : BlendNode(name, &ikClassDescriptor)
+  {
+
+  }
+
+  void InverseKineNode::process(const BlendTree* tree, float dt)
+  {
+
+  }
 }

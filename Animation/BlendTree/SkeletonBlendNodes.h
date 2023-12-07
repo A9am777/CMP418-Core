@@ -1,7 +1,6 @@
 #pragma once
 #include "Animation/BlendTree/BlendNode.h"
 #include "3D/Skeleton3D.h"
-#include <animation/skeleton.h>
 
 namespace gef
 {
@@ -137,6 +136,50 @@ namespace BlendTree
 
     private:
     static NodeClassMeta clipClassDescriptor;
+  };
+
+  // Applies FABRIK to a pose
+  class InverseKineNode : public BlendNode
+  {
+    public:
+    InverseKineNode(Label name);
+
+    static void registerClass()
+    {
+      ikClassDescriptor.className = "IK";
+      ikClassDescriptor.inputBlueprint = {
+        { "BasePose", Param_Pose },
+        { "EffectorJoint", Param_String },
+        { "RootJoint", Param_String },
+        { "ChainDepth", Param_Int },
+        { "Playing", Param_Bool },
+        { "Resolve", Param_Bool }
+      };
+      ikClassDescriptor.outputBlueprint = { { "ResolvedPose", Param_Pose } };
+    };
+
+    enum InputIdx
+    {
+      InBasePoseIdx = 0,
+      InStartTimeIdx,
+      InProgressionIdx,
+      InRateIdx,
+      InPlayingIdx,
+      InResolveIdx
+    };
+
+    enum OutputIdx
+    {
+      OutResolvedPoseIdx = 0
+    };
+
+    protected:
+    gef::SkeletonPose pose;
+
+    virtual void process(const BlendTree* tree, float dt) override;
+
+    private:
+    static NodeClassMeta ikClassDescriptor;
   };
 
   class SkeletonOutputNode : public BlendNode

@@ -42,6 +42,7 @@ namespace BlendTree
   DeclareGetterNode(Int, Param_Int)
   DeclareGetterNode(String, Param_String)
   DeclareGetterNode(Animation, Param_Animation)
+  DeclareGetterNode(Transform, Param_Transform)
   #undef DeclareGetterNode
 
   // Define a macro for automatically building setter classes (with their own underlying storage)
@@ -76,6 +77,7 @@ namespace BlendTree
   DeclareSetterNode(Vector2, Param_Vec2, gef::Vector2)
   DeclareSetterNode(Int, Param_Int, int)
   DeclareSetterNode(String, Param_String, std::string)
+  DeclareSetterNode(Transform, Param_Transform, gef::Transform)
   #undef DeclareSetterNode
 
   // Define a macro for automatically building debug classes
@@ -106,5 +108,6 @@ namespace BlendTree
   DeclareDebugNode(Int, Param_Int)
   DeclareDebugNode(String, Param_String)
   DeclareDebugNode(Animation, Param_Animation)
+  DeclareDebugNode(Transform, Param_Transform)
   #undef DeclareDebugNode
 }
