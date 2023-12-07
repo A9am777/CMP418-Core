@@ -525,7 +525,7 @@ namespace BlendTree
     PushVanillaNode(ClipNode, SkeleClip);
     PushVanillaNode(BinaryInterpolatorNode, BinaryInterp);
     PushVanillaNode(QuadInterpolatorNode, QuadInterp);
-    PushVanillaNode(InverseKineNode, IK);
+    PushVanillaNode(InverseKineNode, FABRIK);
 
     // Output
     //SkeletonOutputNode::registerClass();

@@ -146,7 +146,7 @@ namespace BlendTree
 
     static void registerClass()
     {
-      ikClassDescriptor.className = "IK";
+      ikClassDescriptor.className = "FABRIK";
       ikClassDescriptor.inputBlueprint = {
         { "BasePose", Param_Pose },
         { "Target", Param_Transform },
