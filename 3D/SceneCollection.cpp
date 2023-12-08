@@ -28,5 +28,10 @@ namespace Animation
   void Animation::SceneCollection::registerScene(Label name, gef::Scene* scene)
   {
     scenes.add(name, scene);
+    // Merge string table to global
+    for (auto& it : scene->string_id_table.table())
+    {
+      StringTable.Add(it.second);
+    }
   }
 }
