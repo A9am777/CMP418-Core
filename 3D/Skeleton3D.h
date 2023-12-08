@@ -37,7 +37,6 @@ namespace Animation
     // Reorients a configuration to satisfy this constraint
     void snapBack(const gef::Vector4& jointPos, const gef::Vector4& jointForward, gef::Vector4& boneDirection, gef::Vector4& childPos, const float boneLength) const;
 
-    //private:
     bool applyOrientation;
     float orientationalDOF; // Orientational constraint, in rads
   };

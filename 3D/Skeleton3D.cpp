@@ -456,9 +456,9 @@ namespace Animation
 		mat.SetTranslation(location);
 	}
 
-	JointConstraint::JointConstraint() : applyOrientation{ false }, orientationalDOF{.0f}
+	JointConstraint::JointConstraint()
 	{
-		orientationalDOF = gef::DegToRad(45.f);
+		orientationalDOF = gef::DegToRad(35.f);
 		applyOrientation = true;
 	}
 
