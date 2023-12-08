@@ -129,7 +129,6 @@ namespace BlendTree
     auto& inputSlot = child->inputs[inIdx];
     inputSlot.parentNode = BlendNodeWPtr(parent);
     inputSlot.slot = outIdx;
-
     
     // It is unlikely this will be required for the parent
     //parent->nodeFlags = BitSet(parent->nodeFlags, NodeLinkUpdateFlag);

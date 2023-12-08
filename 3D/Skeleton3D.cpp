@@ -11,9 +11,8 @@ namespace bt = BlendTree;
 
 namespace Animation
 {
-  Skeleton3D::Instance::Instance() : baseSkeleton{ nullptr }, instance{ nullptr }, blendTree{nullptr}
+	Skeleton3D::Instance::Instance() : baseSkeleton{ nullptr }, instance{ nullptr }, blendTree{ nullptr }, isConstrained{ true }
   {
-    
   }
 
   Skeleton3D::Instance::~Instance()
@@ -61,16 +60,6 @@ namespace Animation
     {
       blendTree->updateNodes(dt);
     }
-
-    if (auto outputBlend = blendOutput.lock())
-    {
-      if (auto a = dynamic_cast<bt::SkeletonOutputNode*>(outputBlend.get()))
-      {
-        
-        
-      }
-    }
-    
   }
 	
   void Skeleton3D::Instance::render(gef::Renderer3D* renderer) const
@@ -80,7 +69,6 @@ namespace Animation
 
   Skeleton3D::Skeleton3D() : skeleton{nullptr}, mesh{nullptr}
   {
-    
   }
 
   void Skeleton3D::bindTo(Skeleton3D::Instance& inst)
@@ -96,6 +84,7 @@ namespace Animation
       identity.SetIdentity();
       inst.instance->set_transform(identity);
     }
+		inst.setUseConstraints(true);
     inst.initBlendTree();
   }
 
@@ -280,7 +269,7 @@ namespace Animation
 				gef::Vector4 boneDirection = childPos - pos;
 				boneDirection = boneDirection / boneLength;
 				auto& constraint = skeletonInstance->getSkeleton()->getConstraints()[boneIndices[i]];
-				if (!constraint.isValid(previousForward, boneDirection))
+				if (skeletonInstance->getUseConstraints() && !constraint.isValid(previousForward, boneDirection))
 				{
 					constraint.snapBack(pos, previousForward, boneDirection, childPos, boneLength);
 				}
@@ -321,7 +310,9 @@ namespace Animation
 					gef::Vector4 boneDirection = pos - childPos;
 					boneDirection = boneDirection / boneLength;
 					auto& constraint = skeletonInstance->getSkeleton()->getConstraints()[boneIndices[i]];
-					if (previousForward.LengthSqr() > reachTolerance && !constraint.isValid(previousForward, boneDirection))
+					if (skeletonInstance->getUseConstraints() && 
+						previousForward.LengthSqr() > reachTolerance && 
+						!constraint.isValid(previousForward, boneDirection))
 					{
 						constraint.snapBack(childPos, previousForward, boneDirection, pos, boneLength);
 					}
@@ -349,7 +340,7 @@ namespace Animation
 					gef::Vector4 boneDirection = childPos - pos;
 					boneDirection = boneDirection / boneLength;
 					auto& constraint = skeletonInstance->getSkeleton()->getConstraints()[boneIndices[i]];
-					if (!constraint.isValid(previousForward, boneDirection))
+					if (skeletonInstance->getUseConstraints() && !constraint.isValid(previousForward, boneDirection))
 					{
 						constraint.snapBack(pos, previousForward, boneDirection, childPos, boneLength);
 					}

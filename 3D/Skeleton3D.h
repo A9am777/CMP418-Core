@@ -62,6 +62,8 @@ namespace Animation
       void update(float dt);
       void render(gef::Renderer3D* renderer) const;
 
+      inline void setUseConstraints(bool constrain) { isConstrained = constrain; }
+      inline bool getUseConstraints() const { return isConstrained; }
       inline BlendTree::BlendTree* getBlendTree() { return blendTree; }
 
       private:
@@ -71,6 +73,7 @@ namespace Animation
 
       BlendTree::BlendTree* blendTree;
       BlendTree::BlendNodeWPtr blendOutput;
+      bool isConstrained;
     };
 
     class IKController
