@@ -26,6 +26,22 @@ namespace BlendTree
 
 namespace Animation
 {
+  // Denotes a constraint for the DOF for a joint
+  class JointConstraint
+  {
+    public:
+    JointConstraint();
+
+    // Checks a configuration satisfies this constraint
+    bool isValid(const gef::Vector4& jointForward, const gef::Vector4& boneDirection) const;
+    // Reorients a configuration to satisfy this constraint
+    void snapBack(const gef::Vector4& jointPos, const gef::Vector4& jointForward, gef::Vector4& boneDirection, gef::Vector4& childPos, const float boneLength) const;
+
+    //private:
+    bool applyOrientation;
+    float orientationalDOF; // Orientational constraint, in rads
+  };
+
   class Skeleton3D
   {
     public:
@@ -97,7 +113,7 @@ namespace Animation
     Skeleton3D();
 
     void bindTo(Skeleton3D::Instance& inst); // Transfers to an instance for use
-    inline void setSkeleton(const gef::Skeleton* newSkeleton) { skeleton = newSkeleton; }
+    void setSkeleton(const gef::Skeleton* newSkeleton);
     inline void setMesh(const gef::Mesh* newMesh) { mesh = newMesh; }
     UInt addAnimation(gef::StringId labelID, const gef::Animation* animation);
     UInt getAnimationID(Label label) const;
@@ -108,10 +124,13 @@ namespace Animation
     inline const size_t getAnimationCount() const { return animations.getHeapSize(); }
     inline const gef::Skeleton* getSkeleton() const { return skeleton; }
     inline const gef::Mesh* getMesh() const { return mesh; }
+    inline std::vector<JointConstraint>& getConstraints() { return constraints; }
+    inline const std::vector<JointConstraint>& getConstraints() const { return constraints; }
 
     protected:
     const gef::Skeleton* skeleton;
     const gef::Mesh* mesh;
+    std::vector<JointConstraint> constraints;
 
     NamedHeap<const gef::Animation*> animations;
   };

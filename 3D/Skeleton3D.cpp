@@ -1,6 +1,7 @@
 #include <algorithm>
 
 #include <animation/animation.h>
+#include <maths/math_utils.h>
 
 #include "Animation/BlendTree/BlendTree.h"
 #include "Animation/BlendTree/SkeletonBlendNodes.h"
@@ -71,7 +72,7 @@ namespace Animation
     }
     
   }
-
+	
   void Skeleton3D::Instance::render(gef::Renderer3D* renderer) const
   {
     renderer->DrawSkinnedMesh(*instance, instance->bone_matrices());
@@ -97,6 +98,13 @@ namespace Animation
     }
     inst.initBlendTree();
   }
+
+	void Skeleton3D::setSkeleton(const gef::Skeleton* newSkeleton)
+	{
+		skeleton = newSkeleton;
+		constraints.clear();
+		constraints.resize(skeleton->joint_count());
+	}
 
   UInt Skeleton3D::addAnimation(gef::StringId labelID, const gef::Animation* animation)
   {
@@ -234,6 +242,17 @@ namespace Animation
 			destPos = target.translation().Transform(worldToModelTransform);
 		}
 
+		// Hold the transform of the root, if it exists
+		gef::Matrix44 rootTransform;
+		rootTransform.SetIdentity();
+		{
+			const gef::Joint& joint = pose.skeleton()->joint(boneIndices[0]);
+			if (joint.parent >= 0)
+			{
+				rootTransform = pose.global_pose()[joint.parent];
+			}
+		}
+
 		// Set up the first pass
 		int iterationCount = 0;
 		float reachDistance = (destPos - jointPosition[0]).Length();
@@ -242,16 +261,30 @@ namespace Animation
 		if (unreachable)
 		{
 			// Not reachable, means fully extend!
+
+			gef::Vector4 previousForward = -gef::Vector4(1.f, .0f, .0f).Transform(rootTransform);
+			previousForward.Normalise();
 			for (int i = 0; i < boneIndices.size(); ++i)
 			{
+				const float boneLength = jointLength[i];
 				const auto& pos = jointPosition[i];
 				reachDistance = (destPos - pos).Length();
 
 				// Perform a simple lerp, extending as far as possible
-				float linearParam = jointLength[i] / reachDistance;
+				float linearParam = boneLength / reachDistance;
 
 				auto& childPos = jointPosition[i + 1];
 				childPos.Lerp(pos, destPos, linearParam);
+
+				// Apply constraint(s)
+				gef::Vector4 boneDirection = childPos - pos;
+				boneDirection = boneDirection / boneLength;
+				auto& constraint = skeletonInstance->getSkeleton()->getConstraints()[boneIndices[i]];
+				if (!constraint.isValid(previousForward, boneDirection))
+				{
+					constraint.snapBack(pos, previousForward, boneDirection, childPos, boneLength);
+				}
+				previousForward = boneDirection;
 			}
 			++iterationCount;
 		}
@@ -260,6 +293,8 @@ namespace Animation
 			// Reachable, means do the main FABRIK algorithm
 
 			auto originalRootPos = jointPosition[0]; // Cache an anchor of the root position
+			gef::Vector4 originalForward = -gef::Vector4(1.f, .0f, .0f).Transform(rootTransform);
+			originalForward.Normalise(); // Cache the root forward
 
 			// Initial check if the end effector is on the target (square distance)
 			reachDistance = (destPos - jointPosition.back()).LengthSqr();
@@ -268,33 +303,57 @@ namespace Animation
 				// FORWARD REACHING STAGE //
 				// We want to overextend the end effector and smoothly reconstruct everything towards it
 				jointPosition.back() = destPos; // Snap to the destination
+				gef::Vector4 previousForward = gef::Vector4::kZero; // For constraints
 				for (int i = boneIndices.size() - 1; i > 0; --i)
 				{
+					const float boneLength = jointLength[i];
 					auto& pos = jointPosition[i];
 					const auto& childPos = jointPosition[i + 1];
 
 					reachDistance = (childPos - pos).Length();
 
 					// Lerp towards the requested child position up to the accessible length
-					float linearParam = jointLength[i] / reachDistance;
+					float linearParam = boneLength / reachDistance;
 
 					pos.Lerp(childPos, pos, linearParam);
+
+					// Apply constraint(s)
+					gef::Vector4 boneDirection = pos - childPos;
+					boneDirection = boneDirection / boneLength;
+					auto& constraint = skeletonInstance->getSkeleton()->getConstraints()[boneIndices[i]];
+					if (previousForward.LengthSqr() > reachTolerance && !constraint.isValid(previousForward, boneDirection))
+					{
+						constraint.snapBack(childPos, previousForward, boneDirection, pos, boneLength);
+					}
+					previousForward = boneDirection;
 				}
 
 				// BACKWARDS REACHING STAGE //
 				// Now snap the root back and apply some push back
 				jointPosition[0] = originalRootPos; // Snap back!
+				previousForward = originalForward;
 				for (int i = 0; i < boneIndices.size(); ++i)
 				{
+					const float boneLength = jointLength[i];
 					const auto& pos = jointPosition[i];
 					auto& childPos = jointPosition[i + 1];
 
 					reachDistance = (childPos - pos).Length();
 
 					// Lerp the child towards the requested anchored position up to the accessible length
-					float linearParam = jointLength[i] / reachDistance;
+					float linearParam = boneLength / reachDistance;
 
 					childPos.Lerp(pos, childPos, linearParam);
+
+					// Apply constraint(s)
+					gef::Vector4 boneDirection = childPos - pos;
+					boneDirection = boneDirection / boneLength;
+					auto& constraint = skeletonInstance->getSkeleton()->getConstraints()[boneIndices[i]];
+					if (!constraint.isValid(previousForward, boneDirection))
+					{
+						constraint.snapBack(pos, previousForward, boneDirection, childPos, boneLength);
+					}
+					previousForward = boneDirection;
 				}
 
 				// PREPARE NEXT PASS //
@@ -307,17 +366,7 @@ namespace Animation
 		// Compute global transforms and apply
 		{
 			// Hold the transform of the previous global transform
-			gef::Matrix44 priorTransform;
-			priorTransform.SetIdentity();
-
-			// Set to the parent transform of the IK 'root' if feasible
-			{
-				const gef::Joint& joint = pose.skeleton()->joint(boneIndices[0]);
-				if (joint.parent >= 0)
-				{
-					priorTransform = pose.global_pose()[joint.parent];
-				}
-			}
+			gef::Matrix44 priorTransform = rootTransform;
 
 			// Lets set each joint transform then!
 			for (int i = 0; i < boneIndices.size(); ++i)
@@ -405,6 +454,62 @@ namespace Animation
 			setOrientation(mat, newRight, newUp, forward);
 		}
 		mat.SetTranslation(location);
+	}
+
+	JointConstraint::JointConstraint() : applyOrientation{ false }, orientationalDOF{.0f}
+	{
+		orientationalDOF = gef::DegToRad(45.f);
+		applyOrientation = true;
+	}
+
+	bool JointConstraint::isValid(const gef::Vector4& jointForward, const gef::Vector4& boneDirection) const
+	{
+		bool isValid = true;
+
+		if (applyOrientation)
+		{
+			// Orientation is a simple revolution around the joint forward
+			float cosAng = jointForward.DotProduct(boneDirection);
+
+			float angle = acosf(std::clamp(cosAng, -1.f, 1.f));
+
+			isValid = isValid && (angle <= orientationalDOF);
+		}
+
+		return isValid;
+	}
+
+	void JointConstraint::snapBack(const gef::Vector4& jointPos, const gef::Vector4& jointForward, gef::Vector4& boneDirection, gef::Vector4& childPos, const float boneLength) const
+	{
+		// Orientation last
+		if (applyOrientation)
+		{
+			gef::Vector4 boneVector = childPos - jointPos;
+
+			// Project the bone onto the normal
+			float initialNormalBias = jointForward.DotProduct(boneVector);
+			gef::Vector4 normalVector = jointForward * initialNormalBias;
+			// Project the bone onto the orientation plane
+			gef::Vector4 planeVector = boneVector - normalVector;
+
+			// The ratio of each vector we must satisfy
+			float ratio = tanf(orientationalDOF);
+			// Get the new plane distance
+			float planeDistance = ratio * initialNormalBias;
+
+			// Skew the plane vector, then normalise again
+			planeVector.Normalise();
+			planeVector = planeVector * planeDistance;
+			
+			boneDirection = normalVector + planeVector;
+			boneDirection.Normalise();
+
+			// Direction must be negated if we worked in the -ve cone
+			if (initialNormalBias < .0f) { boneDirection = boneDirection * -1.f; }
+
+			// Set the new child position, maintaining the constant bone length
+			childPos = boneDirection * boneLength + jointPos;
+		}
 	}
 
 }
