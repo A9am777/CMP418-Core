@@ -1,6 +1,7 @@
 #include <algorithm>
 
 #include <animation/animation.h>
+#include <maths/math_utils.h>
 
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include <ax/Widgets.h>
@@ -280,18 +281,26 @@ namespace BlendTree
     setOutput(OutFirstAnimationIdx, firstAnimRef);
     setOutput(OutSecondAnimationIdx, secondAnimRef);
     
-    auto doFadeRef = getInput<bool>(InDoFadeIdx);
+    auto doPlayRef = getInput<bool>(InPlayingIdx);
     auto fadeDurationRef = getInput<float>(InFadeDurationIdx);
+    auto blendRef = getInput<float>(InProgressionIdx);
     auto fadeRateRef = getInput<float>(InRateIdx);
     auto fadeTypeRef = getInput<int>(InFadeTypeIdx);
 
-    // Return early if no update is required
-    if (doFadeRef && !*doFadeRef)
+    float duration = fadeDurationRef ? *fadeDurationRef : 1.f;
+    float rate = fadeRateRef ? *fadeRateRef : 1.f;
+    
+    // Set the blend reference to either my internal timer or the input
+    blendRef = blendRef ? blendRef : &blendValue;
+    setOutput(OutBlendValueIdx, blendRef);
+
+    if (!doPlayRef || *doPlayRef)
     {
-      return;
+      // Update the blend value
+      *blendRef = blendValue = std::clamp(*blendRef + (dt * rate / duration), .0f, 1.f);
     }
 
-    // Configure values based on cross fade type
+    // Configure additional values based on cross fade type
     switch (FadeType(fadeTypeRef ? *fadeTypeRef : 1))
     {
       default:
@@ -301,7 +310,6 @@ namespace BlendTree
         animFirstController.speed = 1.f;
         animSecondController.playing = true;
         animSecondController.speed = 1.f;
-        
       }
       return;
       case FadeType::Frozen:
@@ -320,10 +328,22 @@ namespace BlendTree
         animSecondController.speed = 1.f;
       }
       break;
-    }
+      case FadeType::LocoMotion:
+      {
+        // Fetch both animation durations
+        float firstDuration = firstAnimRef ? firstAnimRef->duration() : duration;
+        float secondDuration = secondAnimRef ? secondAnimRef->duration() : firstDuration;
 
-    float duration = fadeDurationRef ? *fadeDurationRef : 1.f;
-    float rate = fadeRateRef ? *fadeRateRef : 1.f;
-    blendValue = std::clamp(blendValue + (dt * rate / duration), .0f, 1.f);
+        // We want to scale both clips linearly
+        float firstDilation = firstDuration / secondDuration;
+        float secondDilation = secondDuration / firstDuration;
+
+        animFirstController.playing = true;
+        animSecondController.playing = true;
+        animFirstController.speed = gef::Lerp(1.f, firstDilation, *blendRef);
+        animSecondController.speed = gef::Lerp(secondDilation, 1.f, *blendRef);
+      }
+      break;
+    }
   }
 }

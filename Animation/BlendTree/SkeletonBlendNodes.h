@@ -151,9 +151,10 @@ namespace BlendTree
         { "FirstAnimation", Param_Animation },
         { "SecondAnimation", Param_Animation },
         { "FadeDuration", Param_Float },
+        { "Progression", Param_Float },
         { "Rate", Param_Float },
         { "FadeType", Param_Int },
-        { "DoFade", Param_Bool }
+        { "Playing", Param_Bool }
       };
       crossfadeClassDescriptor.outputBlueprint = {
         { "BlendValue", Param_Float },
@@ -171,9 +172,10 @@ namespace BlendTree
       InFirstAnimationIdx = 0,
       InSecondAnimationIdx,
       InFadeDurationIdx,
+      InProgressionIdx,
       InRateIdx,
       InFadeTypeIdx,
-      InDoFadeIdx
+      InPlayingIdx
     };
 
     enum OutputIdx
