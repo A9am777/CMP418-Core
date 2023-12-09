@@ -2,6 +2,11 @@
 
 #include <animation/animation.h>
 
+#define IMGUI_DEFINE_MATH_OPERATORS
+#include <ax/Widgets.h>
+#include <ax/builders.h>
+#include <imgui_stdlib.h>
+
 #include "3D/Skeleton3D.h"
 #include "Animation/BlendTree/SkeletonBlendNodes.h"
 #include "BlendTree.h"
@@ -11,6 +16,7 @@ namespace BlendTree
   NodeClassMeta BinaryInterpolatorNode::binaryInterpClassDescriptor;
   NodeClassMeta QuadInterpolatorNode::quadInterpClassDescriptor;
   NodeClassMeta ClipNode::clipClassDescriptor;
+  NodeClassMeta CrossFadeControllerNode::crossfadeClassDescriptor;
   NodeClassMeta InverseKineNode::ikClassDescriptor;
   NodeClassMeta SkeletonOutputNode::skeleOutClassDescriptor;
 
@@ -211,5 +217,113 @@ namespace BlendTree
     gef::Matrix44 identityMat;
     identityMat.SetIdentity();
     previousIterations = ikController.resolveFABRIK(targetRef ? *targetRef : gef::Transform(identityMat), pose);
+  }
+
+  CrossFadeControllerNode::CrossFadeControllerNode(Label name) : BlendNode(name, &crossfadeClassDescriptor), blendValue{ .0f }
+  {
+    setOutput(OutFirstAnimationIdx, nullptr);
+    setOutput(OutSecondAnimationIdx, nullptr);
+    setOutput(OutBlendValueIdx, &blendValue);
+
+    setOutput(OutFirstPlayingIdx, &animFirstController.playing);
+    setOutput(OutFirstSpeedIdx, &animFirstController.speed);
+
+    setOutput(OutSecondPlayingIdx, &animSecondController.playing);
+    setOutput(OutSecondSpeedIdx, &animSecondController.speed);
+  }
+
+  bool CrossFadeControllerNode::connectClip(BlendNodePtr nodePtr, bool isFirst)
+  {
+    if (auto clipNode = dynamic_cast<ClipNode*>(nodePtr.get()))
+    {
+      UInt OutOffsetIdx = isFirst ? 0 : OutSecondAnimationIdx - OutFirstAnimationIdx;
+      bool success = true;
+
+      BlendNodePtr meNodePtr(this);
+
+      success = tryLink(meNodePtr, OutFirstAnimationIdx + OutOffsetIdx, nodePtr, ClipNode::InBaseAnimationIdx) &&
+      tryLink(meNodePtr, OutFirstPlayingIdx + OutOffsetIdx, nodePtr, ClipNode::InPlayingIdx) &&
+      tryLink(meNodePtr, OutFirstSpeedIdx + OutOffsetIdx, nodePtr, ClipNode::InRateIdx);
+
+      std::memset(&meNodePtr, 0, sizeof(BlendNodePtr)); // Wipe ownership of fake strong ptr
+      return success;
+    }
+
+    return false;
+  }
+
+  void CrossFadeControllerNode::resetBlend()
+  {
+    blendValue = .0f;
+  }
+
+  void CrossFadeControllerNode::render()
+  {
+    ne::Utilities::BlueprintNodeBuilder builder;
+    builder.Begin(imguiPinStart);
+    renderStandardHeader(builder);
+    if (ImGui::Button("Reset"))
+    {
+      resetBlend();
+    }
+    renderStandardInputPins(builder);
+    builder.Middle();
+    renderStandardOutputPins(builder);
+    builder.End();
+  }
+
+  void CrossFadeControllerNode::process(const BlendTree* tree, float dt)
+  {
+    // Fetch inputs
+    auto firstAnimRef = getInput<const gef::Animation>(InFirstAnimationIdx);
+    auto secondAnimRef = getInput<const gef::Animation>(InSecondAnimationIdx);
+    setOutput(OutFirstAnimationIdx, firstAnimRef);
+    setOutput(OutSecondAnimationIdx, secondAnimRef);
+    
+    auto doFadeRef = getInput<bool>(InDoFadeIdx);
+    auto fadeDurationRef = getInput<float>(InFadeDurationIdx);
+    auto fadeRateRef = getInput<float>(InRateIdx);
+    auto fadeTypeRef = getInput<int>(InFadeTypeIdx);
+
+    // Return early if no update is required
+    if (doFadeRef && !*doFadeRef)
+    {
+      return;
+    }
+
+    // Configure values based on cross fade type
+    switch (FadeType(fadeTypeRef ? *fadeTypeRef : 1))
+    {
+      default:
+      {
+        blendValue = .0f;
+        animFirstController.playing = true;
+        animFirstController.speed = 1.f;
+        animSecondController.playing = true;
+        animSecondController.speed = 1.f;
+        
+      }
+      return;
+      case FadeType::Frozen:
+      {
+        animFirstController.playing = false;
+        animFirstController.speed = 1.f;
+        animSecondController.playing = true;
+        animSecondController.speed = 1.f;
+      }
+      break;
+      case FadeType::Smooth:
+      {
+        animFirstController.playing = true;
+        animFirstController.speed = 1.f;
+        animSecondController.playing = true;
+        animSecondController.speed = 1.f;
+      }
+      break;
+    }
+
+    float duration = fadeDurationRef ? *fadeDurationRef : 1.f;
+    float rate = fadeRateRef ? *fadeRateRef : 1.f;
+    blendValue = std::clamp(blendValue + (dt * rate / duration), .0f, 1.f);
   }
 }

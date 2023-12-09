@@ -138,7 +138,88 @@ namespace BlendTree
     static NodeClassMeta clipClassDescriptor;
   };
 
-  // Applies FABRIK to a pose provided a 
+  // Controls crossfade states between two animations
+  class CrossFadeControllerNode : public BlendNode
+  {
+    public:
+    CrossFadeControllerNode(Label name);
+
+    static void registerClass()
+    {
+      crossfadeClassDescriptor.className = "CrossFader";
+      crossfadeClassDescriptor.inputBlueprint = {
+        { "FirstAnimation", Param_Animation },
+        { "SecondAnimation", Param_Animation },
+        { "FadeDuration", Param_Float },
+        { "Rate", Param_Float },
+        { "FadeType", Param_Int },
+        { "DoFade", Param_Bool }
+      };
+      crossfadeClassDescriptor.outputBlueprint = {
+        { "BlendValue", Param_Float },
+        { "FirstAnimation (Mirror)", Param_Animation },
+        { "FirstAnimPlaying", Param_Bool },
+        { "FirstAnimSpeed", Param_Float },
+        { "SecondAnimation (Mirror)", Param_Animation },
+        { "SecondAnimPlaying", Param_Bool },
+        { "SecondAnimSpeed", Param_Float }
+      };
+    };
+
+    enum InputIdx
+    {
+      InFirstAnimationIdx = 0,
+      InSecondAnimationIdx,
+      InFadeDurationIdx,
+      InRateIdx,
+      InFadeTypeIdx,
+      InDoFadeIdx
+    };
+
+    enum OutputIdx
+    {
+      OutBlendValueIdx = 0,
+      OutFirstAnimationIdx,
+      OutFirstPlayingIdx,
+      OutFirstSpeedIdx,
+      OutSecondAnimationIdx,
+      OutSecondPlayingIdx,
+      OutSecondSpeedIdx
+    };
+
+    enum class FadeType
+    {
+      None = 0,
+      Frozen,
+      Smooth,
+      LocoMotion,
+      COUNT
+    };
+
+    // Helper to connect outputs to a clip node
+    bool connectClip(BlendNodePtr nodePtr, bool isFirst = true);
+
+    void resetBlend();
+    virtual void render() override;
+
+    protected:
+    struct AnimationControlParams
+    {
+      bool playing = true;
+      float speed = 1.f;
+    };
+
+    float blendValue;
+    AnimationControlParams animFirstController;
+    AnimationControlParams animSecondController;
+
+    virtual void process(const BlendTree* tree, float dt) override;
+
+    private:
+    static NodeClassMeta crossfadeClassDescriptor;
+  };
+
+  // Applies FABRIK to a pose provided a target transform and end effector joint
   class InverseKineNode : public BlendNode
   {
     public:

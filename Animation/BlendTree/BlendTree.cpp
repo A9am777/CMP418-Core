@@ -50,6 +50,7 @@ namespace BlendTree
 
     // Blend nodes
     ClipNode::registerClass();
+    CrossFadeControllerNode::registerClass();
     BinaryInterpolatorNode::registerClass();
     QuadInterpolatorNode::registerClass();
     InverseKineNode::registerClass();
@@ -531,6 +532,7 @@ namespace BlendTree
 
     // Blend nodes
     PushVanillaNode(ClipNode, SkeleClip);
+    PushVanillaNode(CrossFadeControllerNode, CrossFader);
     PushVanillaNode(BinaryInterpolatorNode, BinaryInterp);
     PushVanillaNode(QuadInterpolatorNode, QuadInterp);
     PushVanillaNode(InverseKineNode, FABRIK);

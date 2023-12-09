@@ -164,7 +164,7 @@ namespace BlendTree
     renderStandardOutputPins(builder);
     if (outputs[0])
     {
-      ImGui::Text(outputs[0] ? "Value: true" : "Value: false");
+      ImGui::Text(*(bool*)outputs[0] ? "Value: true" : "Value: false");
     }
     else
     {
