@@ -112,7 +112,6 @@ namespace IO
       
       if (slotNode.HasMember("display"))
       {
-        // TODO: why can display be an array
         auto displayNodes = slotNode["display"].GetArray();
         auto& displayNode = *displayNodes.Begin();
 
@@ -178,7 +177,7 @@ namespace IO
       }
     }
 
-    return false;
+    return true;
   }
 
   bool DragonBonesImporter::parseSkinnedSkeleton(Animation::SkinnedSkeleton2D& out, const rapidjson::Document& json)

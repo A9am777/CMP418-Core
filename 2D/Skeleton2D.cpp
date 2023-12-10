@@ -10,7 +10,6 @@ namespace Animation
 {
   Skeleton2D::Skeleton2D() : rootBoneID{NULL}
   {
-    
   }
 
   Skeleton2D::DetailedBone& Skeleton2D::addBone(Label name)

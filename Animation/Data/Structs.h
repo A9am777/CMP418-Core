@@ -4,6 +4,7 @@
 
 namespace Animation
 {
+	// To decompose a time to frame + subframe
 	struct FrameSignature
 	{
 		UInt major; // The frame ID itself

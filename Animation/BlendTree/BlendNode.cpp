@@ -9,7 +9,7 @@ namespace BlendTree
 {
   NodeClassMeta BlendNode::baseClassDescriptor;
 
-  BlendNode::BlendNode(Label name, const NodeClassMeta* descriptor) : nodeFlags{ NodeInitMask }
+  BlendNode::BlendNode(Label name, const NodeClassMeta* descriptor) : nodeFlags{ NodeInitMask }, imguiPinStart { 0 }
   {
     nodeName = name;
 
@@ -179,8 +179,8 @@ namespace BlendTree
       ImColor pinColour = getImguiTypeColour(inputPin.type);
 
       builder.Input(inputPinId);
-      ax::Widgets::Icon(ImVec2(static_cast<float>(16), static_cast<float>(16)), ax::Drawing::IconType::Circle, !inputs[inputPinIdx].parentNode.expired(), pinColour);
-
+      const float iconSize = 16.f;
+      ax::Widgets::Icon(ImVec2(iconSize, iconSize), ax::Drawing::IconType::Circle, !inputs[inputPinIdx].parentNode.expired(), pinColour);
       ImGui::TextUnformatted(inputPin.name.c_str());
       ImGui::Spring(0);
       builder.EndInput();
@@ -199,8 +199,8 @@ namespace BlendTree
       builder.Output(outputPinId);
         ImGui::TextUnformatted(outputPin.name.c_str());
         ImGui::Spring(0);
-
-        ax::Widgets::Icon(ImVec2(static_cast<float>(16), static_cast<float>(16)), ax::Drawing::IconType::Circle, true, pinColour);
+        const float iconSize = 16.f;
+        ax::Widgets::Icon(ImVec2(iconSize, iconSize), ax::Drawing::IconType::Circle, true, pinColour);
       builder.EndOutput();
 
       ++outputPinId;

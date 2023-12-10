@@ -10,6 +10,7 @@
 
 namespace IO
 {
+  // Imports data from dragon bones
   class DragonBonesImporter : public Parser
   {
     public:

@@ -4,7 +4,6 @@ namespace Animation
 {
   DopeSheet2D::DopeSheet2D() : sheetDuration{ .0f }, sheetRate{60.f}
   {
-
   }
 
   DopeSheet2D::BakedTrack* DopeSheet2D::bakeTrack(const DetailedTrack& track) const
@@ -138,7 +137,7 @@ namespace Animation
 
   float DopeSheet2D::BakedTrack::lerp(float a, float b, float t) const
   {
-    return a * (1.f-t) + b * t;
+    return a * (1.f - t) + b * t;
   }
 
   gef::Vector2 DopeSheet2D::BakedTrack::lerp(const gef::Vector2& a, const gef::Vector2& b, float t) const
@@ -162,7 +161,6 @@ namespace Animation
 
   DopePlayer2D::DopePlayer2D() : sheet{ nullptr }, time{ .0f }, scaledTime{ .0f }, playing{ false }
   {
-
   }
 
   Maths::Transform2D DopePlayer2D::getCurrentTransform(size_t trackID)

@@ -16,10 +16,12 @@ namespace Animation
   class DopeSheet2D
   {
     public:
+
     enum class InterpolationType : Byte
     {
       TweenLinear
     };
+
     enum AttributeType : Byte // Global transform, translation, etc. Specifically the operation. Ordered by transform order
     {
       AttributeFull = 0,
@@ -32,11 +34,13 @@ namespace Animation
       AttributeY,
       AttributeCount // Counts the possible number of attributes
     };
+
     struct TweenPoint // Interpolation at a point
     {
       InterpolationType tweenType = InterpolationType::TweenLinear;
       float tweenWeight = .0f;
     };
+
     struct DetailedKeyframe
     {
       std::vector<float> values; // Pack of all values for the attribute type
@@ -44,10 +48,12 @@ namespace Animation
       TweenPoint easeOut;
       float duration;
     };
+
     struct DetailedTrack
     {
       std::array<std::list<DetailedKeyframe>, AttributeCount> attributeTracks;
     };
+
     struct Keyframe
     {
       Maths::Transform2D transform;
@@ -55,15 +61,16 @@ namespace Animation
       TweenPoint easeIn;
       TweenPoint easeOut;
     };
+
     class BakedTrack
     {
       friend DopeSheet2D;
       public:
 
       Maths::Transform2D applyTransform(float relativeTime, const Keyframe& first, const Keyframe& next, UInt subtrack);
-      const Keyframe& getKey(size_t subtrack, size_t idx) { return subTracks[subtrack].keyframes[idx]; }
-      inline size_t getAttributeTrackCount() { return subTracks.size(); }
-      inline size_t getKeyframeCount(size_t track) { return subTracks[track].keyframes.size(); }
+      const Keyframe& getKey(size_t subtrack, size_t idx) const { return subTracks[subtrack].keyframes[idx]; }
+      inline size_t getAttributeTrackCount() const { return subTracks.size(); }
+      inline size_t getKeyframeCount(size_t track) const { return subTracks[track].keyframes.size(); }
 
       private:
       struct SubTrack

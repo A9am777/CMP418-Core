@@ -45,7 +45,7 @@ namespace IO
       // Move the animation name into the table
       std::string name;
       scene->string_id_table.Find(it.first, name);
-      StringTable.Add(name); // TODO: Could do with a hint system
+      StringTable.Add(name);
 
       out.addAnimation(it.first, it.second);
     }
@@ -70,7 +70,9 @@ namespace IO
         animation->set_name_id(StringTable.Add(name));
         out.addAnimation(animation->name_id(), animation);
       }
+      return true;
     }
+
     return false;
   }
 

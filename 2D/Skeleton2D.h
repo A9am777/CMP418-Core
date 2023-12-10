@@ -76,6 +76,7 @@ namespace Animation
 
     private:
     void linkDescriptor(); // Propagate skeletal structure
+
     NamedHeap<DetailedBone> boneCollection;
     UInt rootBoneID; // The ID of the presumed root bone
     std::vector<FlatBone> boneList; // Default 'bind' transforms to provide instances in a baked, flattened structure

@@ -2,8 +2,9 @@
 
 namespace IO
 {
+  // Base importer class
   class Parser
   {
-    // TODO
+    // Would contain options etc. for a larger system
   };
 }

@@ -32,6 +32,7 @@ namespace Animation
       blendOutput = bt::BlendNodeWPtr(blendTree->setOutputNode(blendOutputNodeInterim));
     }
 
+		// Add animations to the variable table
     for (size_t i = 0; i < baseSkeleton->getAnimationCount(); ++i)
     {
       if (auto animation = baseSkeleton->getAnimation(i))
@@ -210,7 +211,7 @@ namespace Animation
 		totalLength += jointLength[boneIndices.size() - 1] = effectorLength; // Now include the effector offset
 
 		{
-			// Start with the location off of the leaf bone (just the joint for now)
+			// Start with the location off of the leaf bone
 			auto previousBonePos = jointPosition.back() = pose.global_pose()[boneIndices.back()].GetTranslation();
 			totalLength += jointLength[boneIndices.size() - 1] = effectorLength;
 

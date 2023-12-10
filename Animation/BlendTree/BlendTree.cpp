@@ -8,7 +8,7 @@ namespace BlendTree
   std::vector<Literal> BlendTree::imguiNodeTypeComboNameList;
   std::vector<BlendTree::CreateNodeFunc> BlendTree::imguiNodeCreationFunctionList;
 
-  BlendTree::BlendTree() : imguiNodeContext{ nullptr }, imguiNextPinMajor{ 1 }, updateParity{ false }, useTraversalCache{ true }, forceVisitNodes{ false }, imguiContextComboCurrentID{ 0 }
+  BlendTree::BlendTree() : imguiNodeContext{ nullptr }, imguiNextPinMajor{ 1 }, updateParity{ false }, useTraversalCache{ true }, forceVisitNodes{ false }, imguiContextComboCurrentID{ 0 }, instanceContext{ nullptr }
   {
     
   }
@@ -131,8 +131,6 @@ namespace BlendTree
         ne::PinId pinId = 0;
         if (ne::QueryNewNode(&pinId))
         {
-
-
           if (ne::AcceptNewItem())
           {
             ne::Suspend();

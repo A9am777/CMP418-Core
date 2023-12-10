@@ -5,7 +5,6 @@ namespace Animation
 {
   SpriteSheet::SpriteSheet()
   {
-
   }
 
   bool SpriteSheet::bake()

@@ -27,6 +27,7 @@ namespace Textures
     Int displayWidth, displayHeight;
   };
 
+  // Contains texture resources (deferred load)
   class TextureCollection
   {
     public:
