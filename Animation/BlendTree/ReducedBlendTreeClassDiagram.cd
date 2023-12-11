@@ -1,0 +1,346 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1" GroupingSetting="Access" MembersFormat="NameAndType">
+  <Class Name="BlendTree::BlendTree">
+    <Position X="16.5" Y="0.75" Width="1.5" />
+    <Members>
+      <Method Name="getAnimation" Hidden="true" />
+      <Method Name="getBindPose" Hidden="true" />
+      <Method Name="getBool" Hidden="true" />
+      <Method Name="getFloat" Hidden="true" />
+      <Method Name="getInt" Hidden="true" />
+      <Method Name="getString" Hidden="true" />
+      <Method Name="getTransform" Hidden="true" />
+      <Method Name="getVector2" Hidden="true" />
+      <Field Name="imguiContextComboCurrentID" Hidden="true" />
+      <Method Name="imguiFromPinStart" Hidden="true" />
+      <Field Name="imguiNextNodeName" Hidden="true" />
+      <Field Name="imguiNextPinMajor" Hidden="true" />
+      <Field Name="imguiNodeContext" Hidden="true" />
+      <Field Name="imguiNodeCreationFunctionList" Hidden="true" />
+      <Field Name="imguiNodeIdCtx" Hidden="true" />
+      <Field Name="imguiNodeLinkIdCtx" Hidden="true" />
+      <Field Name="imguiNodePinIdCtx" Hidden="true" />
+      <Field Name="imguiNodeTypeComboNameList" Hidden="true" />
+      <Method Name="imguiPopup" Hidden="true" />
+      <Field Name="imguiPopupLocation" Hidden="true" />
+      <Method Name="imguiPushNodeClass" Hidden="true" />
+      <Method Name="imguiRegisterAllNodes" Hidden="true" />
+      <Method Name="imguiToPinStart" Hidden="true" />
+      <Method Name="isUpdateAllForced" Hidden="true" />
+      <Field Name="nodeGUIDMap" Hidden="true" />
+      <Method Name="renderContextMenus" Hidden="true" />
+      <Method Name="renderGraph" Hidden="true" />
+    </Members>
+    <Compartments>
+      <Compartment Name="Public" Collapsed="true" />
+      <Compartment Name="Private" Collapsed="true" />
+    </Compartments>
+    <NestedTypes>
+      <Typedef Name="BlendTree::BlendTree::CreateNodeFunc" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>C:\Users\Adam\source\repos\uni\CMP418-Coursework\Core\Animation\BlendTree\BlendTree.h</NewMemberFileName>
+        </TypeIdentifier>
+      </Typedef>
+    </NestedTypes>
+    <TypeIdentifier>
+      <HashCode>AKEgABlAoAEEAEAgAAAAhCICIof4QHBwAKgAgAAgOQI=</HashCode>
+      <FileName>C:\Users\Adam\source\repos\uni\CMP418-Coursework\Core\Animation\BlendTree\BlendTree.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="BlendTree::BlendNode">
+    <Position X="16.5" Y="2.75" Width="1.75" />
+    <Members>
+      <Method Name="getConnectionCount" Hidden="true" />
+      <Method Name="getImguiInputStartID" Hidden="true" />
+      <Method Name="getImguiOutputStartID" Hidden="true" />
+      <Method Name="getImguiPinStart" Hidden="true" />
+      <Method Name="getImguiTypeColour" Hidden="true" />
+      <Method Name="getInput" Hidden="true" />
+      <Method Name="getInputCount" Hidden="true" />
+      <Method Name="getName" Hidden="true" />
+      <Method Name="getOutputCount" Hidden="true" />
+      <Field Name="imguiLinkThickness" Hidden="true" />
+      <Method Name="imguiPinToIdx" Hidden="true" />
+      <Method Name="imguiPinToName" Hidden="true" />
+      <Method Name="imguiPinToType" Hidden="true" />
+      <Method Name="isImguiInputPin" Hidden="true" />
+      <Method Name="renderStandardHeader" Hidden="true" />
+      <Method Name="renderStandardInputPins" Hidden="true" />
+      <Method Name="renderStandardOutputPins" Hidden="true" />
+      <Method Name="requiresTraversal" Hidden="true" />
+      <Method Name="requiresUpdate" Hidden="true" />
+      <Method Name="setImguiPinStart" Hidden="true" />
+    </Members>
+    <Compartments>
+      <Compartment Name="Public" Collapsed="true" />
+      <Compartment Name="Protected" Collapsed="true" />
+      <Compartment Name="Private" Collapsed="true" />
+      <Compartment Name="Fields" Collapsed="true" />
+      <Compartment Name="Methods" Collapsed="true" />
+    </Compartments>
+    <NestedTypes>
+      <Struct Name="BlendTree::BlendNode::InputSource" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>C:\Users\Adam\source\repos\uni\CMP418-Coursework\Core\Animation\BlendTree\BlendNode.h</NewMemberFileName>
+        </TypeIdentifier>
+      </Struct>
+      <Enum Name="BlendTree::BlendNode::NodeFlags" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>C:\Users\Adam\source\repos\uni\CMP418-Coursework\Core\Animation\BlendTree\BlendNode.h</NewMemberFileName>
+        </TypeIdentifier>
+      </Enum>
+    </NestedTypes>
+    <TypeIdentifier>
+      <HashCode>AAABBRECgDDQIEAEYgRAAAoiQAwAwBAAABAHQAYUAAA=</HashCode>
+      <FileName>C:\Users\Adam\source\repos\uni\CMP418-Coursework\Core\Animation\BlendTree\BlendNode.h</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Field Name="classDescriptor" />
+    </ShowAsAssociation>
+  </Class>
+  <Class Name="BlendTree::BinaryInterpolatorNode">
+    <Position X="13.25" Y="8" Width="1.5" />
+    <NestedTypes>
+      <Enum Name="BlendTree::BinaryInterpolatorNode::InputIdx" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>C:\Users\Adam\source\repos\uni\CMP418-Coursework\Core\Animation\BlendTree\SkeletonBlendNodes.h</NewMemberFileName>
+        </TypeIdentifier>
+      </Enum>
+      <Enum Name="BlendTree::BinaryInterpolatorNode::OutputIdx" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>C:\Users\Adam\source\repos\uni\CMP418-Coursework\Core\Animation\BlendTree\SkeletonBlendNodes.h</NewMemberFileName>
+        </TypeIdentifier>
+      </Enum>
+    </NestedTypes>
+    <AssociationLine Name="binaryInterpClassDescriptor" Type="BlendTree::NodeClassMeta" ManuallyRouted="true" FixedFromPoint="true" FixedToPoint="true">
+      <Path>
+        <Point X="14" Y="10.329" />
+        <Point X="14" Y="12.769" />
+        <Point X="21.149" Y="12.769" />
+        <Point X="21.149" Y="5.785" />
+        <Point X="20.125" Y="5.785" />
+        <Point X="20.125" Y="4.488" />
+      </Path>
+      <MemberNameLabel ManuallyPlaced="true">
+        <Position X="4.95" Y="7.476" />
+      </MemberNameLabel>
+    </AssociationLine>
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAABAAAAAAAAAAAAIAAAAAAAAABAAAAAMAAAA=</HashCode>
+      <FileName>C:\Users\Adam\source\repos\uni\CMP418-Coursework\Core\Animation\BlendTree\SkeletonBlendNodes.h</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Field Name="binaryInterpClassDescriptor" />
+    </ShowAsAssociation>
+  </Class>
+  <Class Name="BlendTree::QuadInterpolatorNode">
+    <Position X="19.5" Y="8" Width="1.5" />
+    <NestedTypes>
+      <Enum Name="BlendTree::QuadInterpolatorNode::InputIdx" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>C:\Users\Adam\source\repos\uni\CMP418-Coursework\Core\Animation\BlendTree\SkeletonBlendNodes.h</NewMemberFileName>
+        </TypeIdentifier>
+      </Enum>
+      <Enum Name="BlendTree::QuadInterpolatorNode::OutputIdx" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>C:\Users\Adam\source\repos\uni\CMP418-Coursework\Core\Animation\BlendTree\SkeletonBlendNodes.h</NewMemberFileName>
+        </TypeIdentifier>
+      </Enum>
+    </NestedTypes>
+    <AssociationLine Name="quadInterpClassDescriptor" Type="BlendTree::NodeClassMeta" ManuallyRouted="true" FixedFromPoint="true" FixedToPoint="true">
+      <Path>
+        <Point X="20.312" Y="10.521" />
+        <Point X="20.312" Y="12.829" />
+        <Point X="21.125" Y="12.829" />
+        <Point X="21.125" Y="5.752" />
+        <Point X="22.32" Y="5.752" />
+        <Point X="22.32" Y="4.488" />
+      </Path>
+      <MemberNameLabel ManuallyPlaced="true">
+        <Position X="1.338" Y="7.229" />
+      </MemberNameLabel>
+    </AssociationLine>
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAABgAAAIAAgAAAAIAAAAIAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>C:\Users\Adam\source\repos\uni\CMP418-Coursework\Core\Animation\BlendTree\SkeletonBlendNodes.h</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Field Name="quadInterpClassDescriptor" />
+    </ShowAsAssociation>
+  </Class>
+  <Class Name="BlendTree::ClipNode">
+    <Position X="7.5" Y="8" Width="1.75" />
+    <NestedTypes>
+      <Enum Name="BlendTree::ClipNode::InputIdx" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>C:\Users\Adam\source\repos\uni\CMP418-Coursework\Core\Animation\BlendTree\SkeletonBlendNodes.h</NewMemberFileName>
+        </TypeIdentifier>
+      </Enum>
+      <Enum Name="BlendTree::ClipNode::OutputIdx" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>C:\Users\Adam\source\repos\uni\CMP418-Coursework\Core\Animation\BlendTree\SkeletonBlendNodes.h</NewMemberFileName>
+        </TypeIdentifier>
+      </Enum>
+    </NestedTypes>
+    <AssociationLine Name="clipClassDescriptor" Type="BlendTree::NodeClassMeta" ManuallyRouted="true" FixedFromPoint="true" FixedToPoint="true">
+      <Path>
+        <Point X="8.375" Y="10.521" />
+        <Point X="8.375" Y="12.805" />
+        <Point X="21.125" Y="12.805" />
+        <Point X="21.125" Y="5.758" />
+        <Point X="20.531" Y="5.758" />
+        <Point X="20.531" Y="4.488" />
+      </Path>
+      <MemberNameLabel ManuallyPlaced="true">
+        <Position X="11.459" Y="7.226" />
+      </MemberNameLabel>
+    </AssociationLine>
+    <TypeIdentifier>
+      <HashCode>AAAAEAAAABAAAAAAAAAAAAIAAAAAAACABAAAAAAAEAA=</HashCode>
+      <FileName>C:\Users\Adam\source\repos\uni\CMP418-Coursework\Core\Animation\BlendTree\SkeletonBlendNodes.h</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Field Name="clipClassDescriptor" />
+    </ShowAsAssociation>
+  </Class>
+  <Class Name="BlendTree::CrossFadeControllerNode">
+    <Position X="15.75" Y="8" Width="3" />
+    <NestedTypes>
+      <Enum Name="BlendTree::CrossFadeControllerNode::InputIdx" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>C:\Users\Adam\source\repos\uni\CMP418-Coursework\Core\Animation\BlendTree\SkeletonBlendNodes.h</NewMemberFileName>
+        </TypeIdentifier>
+      </Enum>
+      <Enum Name="BlendTree::CrossFadeControllerNode::OutputIdx" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>C:\Users\Adam\source\repos\uni\CMP418-Coursework\Core\Animation\BlendTree\SkeletonBlendNodes.h</NewMemberFileName>
+        </TypeIdentifier>
+      </Enum>
+      <Enum Name="BlendTree::CrossFadeControllerNode::FadeType" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>C:\Users\Adam\source\repos\uni\CMP418-Coursework\Core\Animation\BlendTree\SkeletonBlendNodes.h</NewMemberFileName>
+        </TypeIdentifier>
+      </Enum>
+      <Struct Name="BlendTree::CrossFadeControllerNode::AnimationControlParams" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>C:\Users\Adam\source\repos\uni\CMP418-Coursework\Core\Animation\BlendTree\SkeletonBlendNodes.h</NewMemberFileName>
+        </TypeIdentifier>
+      </Struct>
+    </NestedTypes>
+    <AssociationLine Name="crossfadeClassDescriptor" Type="BlendTree::NodeClassMeta" ManuallyRouted="true" FixedFromPoint="true" FixedToPoint="true">
+      <Path>
+        <Point X="17.125" Y="11.29" />
+        <Point X="17.125" Y="12.796" />
+        <Point X="21.125" Y="12.796" />
+        <Point X="21.125" Y="4.488" />
+      </Path>
+      <MemberNameLabel ManuallyPlaced="true">
+        <Position X="3.213" Y="7.554" />
+      </MemberNameLabel>
+    </AssociationLine>
+    <TypeIdentifier>
+      <HashCode>oAAAAAAAABAAgAAAAAAAAAIABAABAAAAAAAAAAoQAAA=</HashCode>
+      <FileName>C:\Users\Adam\source\repos\uni\CMP418-Coursework\Core\Animation\BlendTree\SkeletonBlendNodes.h</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Field Name="crossfadeClassDescriptor" />
+    </ShowAsAssociation>
+  </Class>
+  <Class Name="BlendTree::SkeletonOutputNode">
+    <Position X="22.25" Y="8" Width="2.25" />
+    <AssociationLine Name="skeleOutClassDescriptor" Type="BlendTree::NodeClassMeta" ManuallyRouted="true" FixedFromPoint="true" FixedToPoint="true">
+      <Path>
+        <Point X="23.312" Y="9.877" />
+        <Point X="23.312" Y="12.703" />
+        <Point X="21.125" Y="12.703" />
+        <Point X="21.125" Y="5.738" />
+        <Point X="21.941" Y="5.738" />
+        <Point X="21.941" Y="4.488" />
+      </Path>
+      <MemberNameLabel ManuallyPlaced="true">
+        <Position X="-2.322" Y="6.728" />
+      </MemberNameLabel>
+    </AssociationLine>
+    <TypeIdentifier>
+      <HashCode>AAAAAAIAABAAAAAAAAAAAAIAAAAAAAAAAAAQAAAAAAA=</HashCode>
+      <FileName>C:\Users\Adam\source\repos\uni\CMP418-Coursework\Core\Animation\BlendTree\SkeletonBlendNodes.h</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Field Name="skeleOutClassDescriptor" />
+    </ShowAsAssociation>
+  </Class>
+  <Class Name="BlendTree::InverseKineNode">
+    <Position X="10.25" Y="8" Width="2" />
+    <NestedTypes>
+      <Enum Name="BlendTree::InverseKineNode::InputIdx" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>C:\Users\Adam\source\repos\uni\CMP418-Coursework\Core\Animation\BlendTree\SkeletonBlendNodes.h</NewMemberFileName>
+        </TypeIdentifier>
+      </Enum>
+      <Enum Name="BlendTree::InverseKineNode::OutputIdx" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>C:\Users\Adam\source\repos\uni\CMP418-Coursework\Core\Animation\BlendTree\SkeletonBlendNodes.h</NewMemberFileName>
+        </TypeIdentifier>
+      </Enum>
+    </NestedTypes>
+    <AssociationLine Name="ikClassDescriptor" Type="BlendTree::NodeClassMeta" ManuallyRouted="true" FixedFromPoint="true" FixedToPoint="true">
+      <Path>
+        <Point X="11.25" Y="10.521" />
+        <Point X="11.25" Y="12.792" />
+        <Point X="21.104" Y="12.792" />
+        <Point X="21.104" Y="5.78" />
+        <Point X="21.562" Y="5.78" />
+        <Point X="21.562" Y="4.488" />
+      </Path>
+      <MemberNameLabel ManuallyPlaced="true">
+        <Position X="9.64" Y="7.511" />
+      </MemberNameLabel>
+    </AssociationLine>
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAABAAAAAAAAAAAEIQAAAAAAAABAAAAAABAAA=</HashCode>
+      <FileName>C:\Users\Adam\source\repos\uni\CMP418-Coursework\Core\Animation\BlendTree\SkeletonBlendNodes.h</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Field Name="ikClassDescriptor" />
+    </ShowAsAssociation>
+  </Class>
+  <Struct Name="BlendTree::ParamDescriptor">
+    <Position X="24" Y="3" Width="1.75" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAFAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>C:\Users\Adam\source\repos\uni\CMP418-Coursework\Core\Animation\BlendTree\BlendNode.h</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Field Name="type" />
+    </ShowAsAssociation>
+  </Struct>
+  <Struct Name="BlendTree::NodeClassMeta">
+    <Position X="19.75" Y="3" Width="3.25" />
+    <TypeIdentifier>
+      <HashCode>AAAAAIAAAAAAAAAAAAAAAAAAAAIAAAAAAAAAAAAAAAI=</HashCode>
+      <FileName>C:\Users\Adam\source\repos\uni\CMP418-Coursework\Core\Animation\BlendTree\BlendNode.h</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Typedef Name="BlendTree::BlendNodePtr" Collapsed="true">
+    <Position X="13" Y="5.25" Width="3.25" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>C:\Users\Adam\source\repos\uni\CMP418-Coursework\Core\Animation\BlendTree\BlendNode.h</FileName>
+    </TypeIdentifier>
+  </Typedef>
+  <Typedef Name="BlendTree::BlendNodeWPtr" Collapsed="true">
+    <Position X="13" Y="6.25" Width="3.25" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>C:\Users\Adam\source\repos\uni\CMP418-Coursework\Core\Animation\BlendTree\BlendNode.h</FileName>
+    </TypeIdentifier>
+  </Typedef>
+  <Enum Name="BlendTree::ParamType">
+    <Position X="24" Y="5" Width="1.75" />
+    <TypeIdentifier>
+      <HashCode>ACAAAQgAAAACAAAAAQEAAAAAAEAAEAAAAAAAAAAAAAA=</HashCode>
+      <FileName>C:\Users\Adam\source\repos\uni\CMP418-Coursework\Core\Animation\BlendTree\BlendNode.h</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>

@@ -1,0 +1,100 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1" MembersFormat="NameAndType">
+  <Class Name="Animation::DopeSheet2D">
+    <Position X="5.5" Y="1.5" Width="4.5" />
+    <Members>
+      <Method Name="addBaseKeyframe" Hidden="true" />
+      <Method Name="doesTrackExist" Hidden="true" />
+      <Method Name="getDuration" Hidden="true" />
+      <Method Name="getRate" Hidden="true" />
+      <Method Name="inspectTracks" Hidden="true" />
+      <Method Name="setDuration" Hidden="true" />
+    </Members>
+    <Compartments>
+      <Compartment Name="Nested Types" Collapsed="false" />
+    </Compartments>
+    <NestedTypes>
+      <Enum Name="Animation::DopeSheet2D::InterpolationType">
+        <TypeIdentifier>
+          <NewMemberFileName>C:\Users\Adam\source\repos\uni\CMP418-Coursework\Core\2D\DopeSheet.h</NewMemberFileName>
+        </TypeIdentifier>
+      </Enum>
+      <Enum Name="Animation::DopeSheet2D::AttributeType">
+        <TypeIdentifier>
+          <NewMemberFileName>C:\Users\Adam\source\repos\uni\CMP418-Coursework\Core\2D\DopeSheet.h</NewMemberFileName>
+        </TypeIdentifier>
+      </Enum>
+      <Struct Name="Animation::DopeSheet2D::TweenPoint">
+        <TypeIdentifier>
+          <NewMemberFileName>C:\Users\Adam\source\repos\uni\CMP418-Coursework\Core\2D\DopeSheet.h</NewMemberFileName>
+        </TypeIdentifier>
+      </Struct>
+      <Struct Name="Animation::DopeSheet2D::DetailedKeyframe">
+        <TypeIdentifier>
+          <NewMemberFileName>C:\Users\Adam\source\repos\uni\CMP418-Coursework\Core\2D\DopeSheet.h</NewMemberFileName>
+        </TypeIdentifier>
+      </Struct>
+      <Struct Name="Animation::DopeSheet2D::DetailedTrack">
+        <TypeIdentifier>
+          <NewMemberFileName>C:\Users\Adam\source\repos\uni\CMP418-Coursework\Core\2D\DopeSheet.h</NewMemberFileName>
+        </TypeIdentifier>
+      </Struct>
+      <Struct Name="Animation::DopeSheet2D::Keyframe">
+        <TypeIdentifier>
+          <NewMemberFileName>C:\Users\Adam\source\repos\uni\CMP418-Coursework\Core\2D\DopeSheet.h</NewMemberFileName>
+        </TypeIdentifier>
+      </Struct>
+      <Class Name="Animation::DopeSheet2D::BakedTrack">
+        <NestedTypes>
+          <Struct Name="Animation::DopeSheet2D::BakedTrack::SubTrack" Collapsed="true">
+            <TypeIdentifier>
+              <NewMemberFileName>C:\Users\Adam\source\repos\uni\CMP418-Coursework\Core\2D\DopeSheet.h</NewMemberFileName>
+            </TypeIdentifier>
+          </Struct>
+        </NestedTypes>
+        <TypeIdentifier>
+          <NewMemberFileName>C:\Users\Adam\source\repos\uni\CMP418-Coursework\Core\2D\DopeSheet.h</NewMemberFileName>
+        </TypeIdentifier>
+      </Class>
+    </NestedTypes>
+    <TypeIdentifier>
+      <HashCode>QAAAAABAIBBAIAAEAAAAAAAACAQgAAAGBgAAAAAAkAA=</HashCode>
+      <FileName>C:\Users\Adam\source\repos\uni\CMP418-Coursework\Core\2D\DopeSheet.h</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Field Name="detailedSheet" />
+    </ShowAsAssociation>
+  </Class>
+  <Class Name="Animation::DopePlayer2D">
+    <Position X="1.5" Y="1.5" Width="2.75" />
+    <Members>
+      <Method Name="setSheet" Hidden="true" />
+      <Method Name="setTrack" Hidden="true" />
+    </Members>
+    <Compartments>
+      <Compartment Name="Nested Types" Collapsed="false" />
+    </Compartments>
+    <NestedTypes>
+      <Struct Name="Animation::DopePlayer2D::Tracker">
+        <TypeIdentifier>
+          <NewMemberFileName>C:\Users\Adam\source\repos\uni\CMP418-Coursework\Core\2D\DopeSheet.h</NewMemberFileName>
+        </TypeIdentifier>
+      </Struct>
+    </NestedTypes>
+    <TypeIdentifier>
+      <HashCode>AIARAAgEEQAEAABAQAgAAAAAAAAAAAAEAAAAAAAEAAE=</HashCode>
+      <FileName>C:\Users\Adam\source\repos\uni\CMP418-Coursework\Core\2D\DopeSheet.h</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Field Name="sheet" />
+    </ShowAsAssociation>
+  </Class>
+  <Class Name="NamedHeap&lt;Data, Indexer&gt;" Collapsed="true">
+    <Position X="11.25" Y="1.5" Width="2.25" />
+    <TypeIdentifier>
+      <HashCode>AEoAAAIAAAAAAACAAAAAQAAAAABAEAAAAAABAAACAAA=</HashCode>
+      <FileName>C:\Users\Adam\source\repos\uni\CMP418-Coursework\Core\DataStructures.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>

@@ -1,0 +1,122 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1" MembersFormat="NameAndType">
+  <Class Name="Animation::Skeleton2D">
+    <Position X="7.25" Y="1.25" Width="3" />
+    <Members>
+      <Method Name="isBaked" Hidden="true" />
+      <Method Name="setLocal" Hidden="true" />
+    </Members>
+    <Compartments>
+      <Compartment Name="Nested Types" Collapsed="false" />
+    </Compartments>
+    <NestedTypes>
+      <Struct Name="Animation::Skeleton2D::BonePoseOffset">
+        <TypeIdentifier>
+          <NewMemberFileName>C:\Users\Adam\source\repos\uni\CMP418-Coursework\Core\2D\Skeleton2D.h</NewMemberFileName>
+        </TypeIdentifier>
+      </Struct>
+      <Struct Name="Animation::Skeleton2D::DetailedBone">
+        <TypeIdentifier>
+          <NewMemberFileName>C:\Users\Adam\source\repos\uni\CMP418-Coursework\Core\2D\Skeleton2D.h</NewMemberFileName>
+        </TypeIdentifier>
+      </Struct>
+      <Struct Name="Animation::Skeleton2D::FlatBone">
+        <TypeIdentifier>
+          <NewMemberFileName>C:\Users\Adam\source\repos\uni\CMP418-Coursework\Core\2D\Skeleton2D.h</NewMemberFileName>
+        </TypeIdentifier>
+      </Struct>
+      <Struct Name="Animation::Skeleton2D::Instance">
+        <TypeIdentifier>
+          <NewMemberFileName>C:\Users\Adam\source\repos\uni\CMP418-Coursework\Core\2D\Skeleton2D.h</NewMemberFileName>
+        </TypeIdentifier>
+      </Struct>
+    </NestedTypes>
+    <TypeIdentifier>
+      <HashCode>AABABAAAACAQgIIAQAQABAkAIAAAAAAAIAAAAAAAQQA=</HashCode>
+      <FileName>C:\Users\Adam\source\repos\uni\CMP418-Coursework\Core\2D\Skeleton2D.h</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Field Name="boneCollection" />
+    </ShowAsAssociation>
+  </Class>
+  <Class Name="Animation::Skeleton2DSlots">
+    <Position X="4.75" Y="1.25" Width="2" />
+    <Compartments>
+      <Compartment Name="Nested Types" Collapsed="false" />
+    </Compartments>
+    <NestedTypes>
+      <Struct Name="Animation::Skeleton2DSlots::DetailedSlotInfo">
+        <TypeIdentifier>
+          <NewMemberFileName>C:\Users\Adam\source\repos\uni\CMP418-Coursework\Core\2D\Skeleton2D.h</NewMemberFileName>
+        </TypeIdentifier>
+      </Struct>
+    </NestedTypes>
+    <TypeIdentifier>
+      <HashCode>QABAAAIAAAAIAAAABAAABQAAAAAAAAAAAAAAEAAAAAA=</HashCode>
+      <FileName>C:\Users\Adam\source\repos\uni\CMP418-Coursework\Core\2D\Skeleton2D.h</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Field Name="slotMap" />
+    </ShowAsAssociation>
+  </Class>
+  <Class Name="Animation::Skeleton2DSkin">
+    <Position X="0.75" Y="6.5" Width="3.75" />
+    <Compartments>
+      <Compartment Name="Nested Types" Collapsed="false" />
+    </Compartments>
+    <NestedTypes>
+      <Struct Name="Animation::Skeleton2DSkin::DetailedSkinPart">
+        <TypeIdentifier>
+          <NewMemberFileName>C:\Users\Adam\source\repos\uni\CMP418-Coursework\Core\2D\Skeleton2D.h</NewMemberFileName>
+        </TypeIdentifier>
+      </Struct>
+      <Struct Name="Animation::Skeleton2DSkin::SkinPart">
+        <TypeIdentifier>
+          <NewMemberFileName>C:\Users\Adam\source\repos\uni\CMP418-Coursework\Core\2D\Skeleton2D.h</NewMemberFileName>
+        </TypeIdentifier>
+      </Struct>
+    </NestedTypes>
+    <TypeIdentifier>
+      <HashCode>AABABAAAAAAAAEAQAAAABAAAAQAAAAAAAAABAAAAIAA=</HashCode>
+      <FileName>C:\Users\Adam\source\repos\uni\CMP418-Coursework\Core\2D\Skeleton2D.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Animation::SkinnedSkeleton2D">
+    <Position X="0.75" Y="1.25" Width="3.25" />
+    <Members>
+      <Method Name="getAnimationCount" Hidden="true" />
+      <Method Name="getAnimationTrack" Hidden="true" />
+      <Method Name="getAtlas" Hidden="true" />
+      <Method Name="getSkeleton" Hidden="true" />
+    </Members>
+    <NestedTypes>
+      <Class Name="Animation::SkinnedSkeleton2D::Instance" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>C:\Users\Adam\source\repos\uni\CMP418-Coursework\Core\2D\Skeleton2D.h</NewMemberFileName>
+        </TypeIdentifier>
+      </Class>
+    </NestedTypes>
+    <AssociationLine Name="detailedAnimationData" Type="NamedHeap&lt;Data, Indexer&gt;">
+      <MemberNameLabel ManuallyPlaced="true">
+        <Position X="0.139" Y="-0.379" />
+      </MemberNameLabel>
+    </AssociationLine>
+    <TypeIdentifier>
+      <HashCode>ACBEAEBAAgAABACQBIQABAEAACAAMAACIBIAAABAIAA=</HashCode>
+      <FileName>C:\Users\Adam\source\repos\uni\CMP418-Coursework\Core\2D\Skeleton2D.h</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Field Name="slots" />
+      <Field Name="skeleton" />
+      <Field Name="detailedAnimationData" />
+    </ShowAsAssociation>
+  </Class>
+  <Class Name="NamedHeap&lt;Data, Indexer&gt;">
+    <Position X="12.5" Y="0.5" Width="2.25" />
+    <TypeIdentifier>
+      <HashCode>AEoAAAIAAAAAAACAAAAAQAAAAABAEAAAAAABAAACAAA=</HashCode>
+      <FileName>C:\Users\Adam\source\repos\uni\CMP418-Coursework\Core\DataStructures.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>

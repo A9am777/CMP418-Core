@@ -69,7 +69,6 @@ namespace Animation
       private:
       const Skeleton3D* baseSkeleton;
       gef::SkinnedMeshInstance* instance;
-      MotionClipPlayer* player;
 
       BlendTree::BlendTree* blendTree;
       BlendTree::BlendNodeWPtr blendOutput;

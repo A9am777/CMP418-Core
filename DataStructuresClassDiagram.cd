@@ -1,0 +1,65 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1" GroupingSetting="Access" MembersFormat="NameAndType">
+  <Comment CommentText="NamedHeapInfo is the base class for &quot;Indexer&quot;">
+    <Position X="7.683" Y="0.5" Height="0.75" Width="1.7" />
+  </Comment>
+  <Class Name="NamedHeapInfo">
+    <Position X="5.5" Y="0.5" Width="1.75" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAACAABAAAABEAAAAAAAAAAAAA=</HashCode>
+      <FileName>C:\Users\Adam\source\repos\uni\CMP418-Coursework\Core\DataStructures.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="NamedHeap&lt;Data, Indexer&gt;">
+    <Position X="0.75" Y="1" Width="4" />
+    <TypeIdentifier>
+      <HashCode>AEoAAAIAAAAAAACAAAAAQAAAAABAEAAAAAABAAACAAA=</HashCode>
+      <FileName>C:\Users\Adam\source\repos\uni\CMP418-Coursework\Core\DataStructures.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Animation::SceneCollection">
+    <Position X="7.25" Y="3" Width="2.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAIAAAAAAIAAAAAIAAAAAAAAAAAARAA=</HashCode>
+      <FileName>C:\Users\Adam\source\repos\uni\CMP418-Coursework\Core\3D\SceneCollection.h</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Field Name="scenes" />
+    </ShowAsAssociation>
+  </Class>
+  <Class Name="Textures::TextureCollection">
+    <Position X="2.75" Y="5.25" Width="2.5" />
+    <Compartments>
+      <Compartment Name="Nested Types" Collapsed="false" />
+    </Compartments>
+    <NestedTypes>
+      <Struct Name="Textures::TextureCollection::DetailedTexture">
+        <InheritanceLine Type="NamedHeapInfo" FixedToPoint="true">
+          <Path>
+            <Point X="6.375" Y="2.44" />
+            <Point X="6.375" Y="8.875" />
+            <Point X="5.14" Y="8.875" />
+          </Path>
+        </InheritanceLine>
+        <TypeIdentifier>
+          <NewMemberFileName>C:\Users\Adam\source\repos\uni\CMP418-Coursework\Core\2D\TextureWorks.h</NewMemberFileName>
+        </TypeIdentifier>
+      </Struct>
+    </NestedTypes>
+    <TypeIdentifier>
+      <HashCode>AAAEAAAAAABAAAAAhAAABAAAABAAAAAAAQAAAQACAAA=</HashCode>
+      <FileName>C:\Users\Adam\source\repos\uni\CMP418-Coursework\Core\2D\TextureWorks.h</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Field Name="resourceMap" />
+    </ShowAsAssociation>
+  </Class>
+  <Struct Name="Animation::FrameSignature">
+    <Position X="10.5" Y="3" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAIAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAIAA=</HashCode>
+      <FileName>C:\Users\Adam\source\repos\uni\CMP418-Coursework\Core\Animation\Data\Structs.h</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>
